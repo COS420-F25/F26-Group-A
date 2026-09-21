@@ -3,7 +3,7 @@ COS 420 Group Project
 
 Team Ant
 
-Mission Statement: Team Ants mission is to build a high-trust, collaborative environment where every team member is empowered to learn, contribute, and communicate openly.
+Mission Statement: Team Ants' mission is to build a high-trust, collaborative environment where every team member is empowered to learn, contribute, and communicate openly.
 
 Names & Roles
 Project Manager: Cyril Agbewali
