@@ -22,6 +22,7 @@ How might we design supportive tools for matching students into compatible refle
 
 
 **Problem Statement 2:**
+
 Students who want to improve themselves often try to do it alone, and without outside perspective, it's hard to catch your own blind spots or stay motivated over time. 
 For example, I struggled with a concept in a programming class last semester that didn't click despite the professor's explanation. I happened to see a classmate studying for the same exam and worked up the nerve to strike up a casual conversation about their prep; they explained the concept in their own words, and it suddenly made sense in a way the lecture hadn't. The insight wasn't better content, just a different framing from someone working through the same material.
 Peer reflection groups attempt to solve this by giving students a space to process and get feedback from others; for example, some courses or clubs run informal peer check-ins or accountability partnerships.
