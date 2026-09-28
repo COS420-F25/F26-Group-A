@@ -4,6 +4,7 @@ COS 420 Group Project
 ## Team Ant
 
 **Roles**
+
 Project Manager: Cyril Agbewali
 
 Developers: Andrew Bobay, Kelvin Nana Gyebi, Zachary Bailey, Ryan Bowley
