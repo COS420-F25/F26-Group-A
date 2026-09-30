@@ -12,6 +12,10 @@ Developers: Andrew Bobay, Kelvin Nana Gyebi, Zachary Bailey, Ryan Bowley
 Designers: Alexander Higgins, Ryan Hallett
 
 ---
+### Mission Statement:
+Our mission is to build a high-trust, collaborative environment where every team member is empowered to learn, contribute, and communicate openly.
+
+---
 
 ### Problem Statement:
 Students often struggle to learn how to improve their learning and performance while also lacking a supportive community to help them reflect on their experiences. Reflection groups can provide this support, but organizing productive groups can be difficult and time-consuming for facilitators and students alike. 
