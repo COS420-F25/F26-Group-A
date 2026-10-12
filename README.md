@@ -28,8 +28,22 @@ Reflection groups can be more productive when members share similar experiences,
 
 How might we design supportive tools to enable students and instructors to get over the motivation barrier to trying reflection groups, then find and sustain compatible reflection groups, so students can have more beneficial reflection experiences, while requiring less facilitation effort (even when an instructor does not organize groups)?
 
-| Problem | Why / Cause | Foothold for solution / way to address the cause |
+| Problem | Why / Cause | Foothold for solution/way to address the cause |
 | :---- | :---- | :---- |
 | It is also hard to get enough motivation to try a new practice like reflection groups, for students and even instructors.  | People have ideas about why reflection groups would not work, based on prior knowledge/experiences or misconceptions about what reflection groups are. | Show convincing arguments on how and why reflection groups work, including prior evidence Explain reflection groups clearly and succinctly to address misconceptions |
-| Forming compatible groups requires time and effort which instructors are not ready to commit to. | Matching on experiences, challenges and schedule is time consuming when done by hand. | Automating the matching using the survey data. |
-| Reflection groups are difficult to sustain without a structure (agenda)  | There is no support/accountability after the groups are formed | Provide weekly agenda and drop-in to keep the groups meeting and creating some form of accountability |
+| Forming compatible groups requires time and effort, which instructors are not ready to commit to. | Matching on experiences, challenges, and schedule is time-consuming when done by hand. | Automating the matching using the survey data. |
+| Reflection groups are difficult to sustain without a structure (agenda)  | There is no support/accountability after the groups are formed | Provide a weekly agenda and drop-in to keep the groups meeting and creating some form of accountability |
+
+## How-to
+To clone the repo: `git clone https://github.com/COS420-F25/F26-Group-A.git`
+
+Astro Commands - All commands are run from the root of the project in a terminal:
+
+| Command                   | Action                                           |
+| :------------------------ | :----------------------------------------------- |
+| `npm install`             | Installs dependencies                            |
+| `npm run dev`             | Starts local dev server at `localhost:4321`      |
+| `npm run build`           | Build your production site to `./dist/`          |
+| `npm run preview`         | Preview your build locally, before deploying     |
+| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
+| `npm run astro -- --help` | Get help using the Astro CLI                     |
