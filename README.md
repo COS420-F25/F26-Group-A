@@ -58,5 +58,6 @@ Andrew B. <img width="2516" height="1348" alt="image" src="https://github.com/us
 
 Zachary B. <img width="1439" height="899" alt="Screenshot 2026-10-12 180101" src="https://github.com/user-attachments/assets/1717793c-1171-48bf-a0ae-a032b6098af2" />
 
-Alexander H. <img width="1920" height="1243" alt="Screenshot 2026-10-12 at 6 13 48 PM" src="https://github.com/user-attachments/assets/3106f0ed-2e80-46ad-87e4-1285d330bd4f" />
+Alexander H. <img width="1920" height="1159" alt="Screenshot 2026-10-12 at 6 25 25 PM" src="https://github.com/user-attachments/assets/b02a797e-ceb8-4d95-9247-9fb624a6eda8" />
+
 
