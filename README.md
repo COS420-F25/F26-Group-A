@@ -48,4 +48,5 @@ Astro Commands - All commands are run from the root of the project in a terminal
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
 
-<img width="1904" height="1036" alt="image" src="https://github.com/user-attachments/assets/5cea679a-9b7f-4ae9-b775-97e81eb8c440" />
+Ryan B. <img width="1904" height="1036" alt="image" src="https://github.com/user-attachments/assets/5cea679a-9b7f-4ae9-b775-97e81eb8c440" />
+Ryan H. <img width="1430" height="890" alt="running-app" src="https://github.com/user-attachments/assets/910dffbe-5050-4286-8c43-962c045fb4c4" />
