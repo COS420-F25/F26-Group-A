@@ -56,6 +56,7 @@ Ryan H. <img width="1430" height="890" alt="running-app" src="https://github.com
 
 Andrew B. <img width="2516" height="1348" alt="image" src="https://github.com/user-attachments/assets/5df162ff-b6ae-4b9a-a301-d49a26a24ffa" />
 
-Zachary B. <img width="719" height="449" alt="Screenshot 2026-10-12 175555" src="https://github.com/user-attachments/assets/3b6a31f4-3b27-462e-823f-993bb51a3d27" />
+Zachary B. <img width="1439" height="899" alt="Screenshot 2026-10-12 180101" src="https://github.com/user-attachments/assets/1717793c-1171-48bf-a0ae-a032b6098af2" />
+
 
 
