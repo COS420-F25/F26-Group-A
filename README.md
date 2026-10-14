@@ -60,4 +60,7 @@ Zachary B. <img width="1439" height="899" alt="Screenshot 2026-10-12 180101" src
 
 Alexander H. <img width="1920" height="1159" alt="Screenshot 2026-10-12 at 6 25 25 PM" src="https://github.com/user-attachments/assets/b02a797e-ceb8-4d95-9247-9fb624a6eda8" />
 
+Kelvin N. G. <img width="1469" height="956" alt="kelvin" src="https://github.com/user-attachments/assets/9bee17af-aecd-4c61-873f-002eb1009d00" />
+
+
 
