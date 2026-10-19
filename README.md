@@ -62,5 +62,7 @@ Alexander H. <img width="1920" height="1159" alt="Screenshot 2026-10-12 at 6 25 
 
 Kelvin N. G. <img width="1469" height="956" alt="kelvin" src="https://github.com/user-attachments/assets/9bee17af-aecd-4c61-873f-002eb1009d00" />
 
+Cyril A. <img width="1421" height="768" alt="Screenshot 2026-10-19 at 10 29 29 AM" src="https://github.com/user-attachments/assets/d54120ee-4cc7-4e65-9770-4149660458c2" />
+
 
 
