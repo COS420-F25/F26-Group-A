@@ -1,0 +1,99 @@
+---
+import FirbaseAuth from "../react-componenets/FirebaseAuth.jsx";
+
+interface Props {
+    title?: string;
+    links?: { label: string; href: string }[];
+}
+
+const { title = "My App", links = [{ label: "Home", href: "/" }] } =
+    Astro.props;
+
+const current = Astro.url.pathname;
+---
+
+<header class="navbar">
+    <nav class="inner" aria-label="Main">
+        <a class="brand" href="/">
+            {title}
+        </a>
+
+        <ul class="links">
+            {links.map((link) => (
+                <li>
+                    <a
+                        href={link.href}
+                        aria-current={
+                            current === link.href ? "page" : undefined
+                        }
+                    >
+                        {link.label}
+                    </a>
+                </li>
+            ))}
+        </ul>
+
+        <div class="auth">
+            <FirbaseAuth client:load compact />
+        </div>
+    </nav>
+</header>
+
+<style>
+    .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--base, #1e1e2e);
+        border-bottom: 1px solid var(--surface, #313244);
+        font-size: 0.875rem;
+    }
+
+    .inner {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        height: 40px; /* thin version of the home navbar */
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 16px;
+    }
+
+    .brand {
+        font-weight: 600;
+        color: var(--text, #cdd6f4);
+        text-decoration: none;
+    }
+
+    .links {
+        display: flex;
+        gap: 16px;
+        flex: 1;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        overflow-x: auto;
+    }
+
+    .links a {
+        color: var(--subtext, #a6adc8);
+        text-decoration: none;
+        padding: 2px 0;
+        border-bottom: 2px solid transparent;
+    }
+
+    .links a:hover {
+        color: var(--text, #cdd6f4);
+    }
+
+    .links a[aria-current="page"] {
+        color: var(--text, #cdd6f4);
+        border-bottom-color: var(--accent, #cba6f7);
+    }
+
+    .links a:focus-visible,
+    .brand:focus-visible {
+        outline: 2px solid var(--accent, #cba6f7);
+        outline-offset: 2px;
+    }
+</style>

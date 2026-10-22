@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+/*
+Add Global Theme Variables here,
+I just added a couple from another project, you may change these if you want
+*/
+:root{
+    --background: #1e1e2e;
+    --surface: #313244;
+    --surface-hover: #45475a;
+    --border: #45475a;
+    --text: #eff1f5;
+}
+
+html {
+    background-color: var(--background);
+    color: var(--text);
+}
+
+.TopSection{
+    background-color: var(--surface);
+    min-height: 50vh;
+}

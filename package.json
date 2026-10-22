@@ -9,14 +9,23 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "host": "astro dev --host"
   },
   "dependencies": {
+    "@astrojs/react": "^7.1.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "astro": "^7.3.5",
-    "react": "^19.3.0",
+    "firebase": "^9.14.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "tailwindcss": "^4.3.3"
   },
   "allowScripts": {
     "esbuild": true
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.0"
   }
 }
