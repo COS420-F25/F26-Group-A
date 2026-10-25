@@ -35,9 +35,11 @@ How might we design supportive tools to enable students and instructors to get o
 | Reflection groups are difficult to sustain without a structure (agenda)  | There is no support/accountability after the groups are formed | Provide a weekly agenda and drop-in to keep the groups meeting and creating some form of accountability |
 
 ## How-to
-To clone the repo: `git clone https://github.com/COS420-F25/F26-Group-A.git`
+- To clone the repo: `git clone https://github.com/COS420-F25/F26-Group-A.git`
+- Install Dependencies: `npm install` 
+- Run Program on `localhost:4321`: `npm run dev`
 
-Astro Commands - All commands are run from the root of the project in a terminal:
+All Astro Commands - All commands are run from the root of the project in a terminal:
 
 | Command                   | Action                                           |
 | :------------------------ | :----------------------------------------------- |
@@ -47,6 +49,7 @@ Astro Commands - All commands are run from the root of the project in a terminal
 | `npm run preview`         | Preview your build locally, before deploying     |
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
+| `npm run host`            | Starts the dev server on local ips               |
 
 
 ### User Screenshots 
