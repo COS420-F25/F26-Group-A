@@ -1,0 +1,29 @@
+---
+import "../styles/global.css";
+const { pageTitle } = Astro.props;
+import Nav from "../astro-components/NavbarSmall.astro";
+import Footer from "../astro-components/Footer.astro";
+---
+
+<!--
+USE THIS IN EVERYTHING BUT THE IDNEX
+-->
+<!doctype html>
+<html transition:animate="none" lang="en">
+    <meta charset="utf-8" />
+    <meta name="description" content="Astro Description" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <head>
+        <title>{pageTitle}</title>
+    </head>
+    <Nav />
+    <body>
+        <main>
+            <slot />
+        </main>
+    </body>
+    <Footer />
+</html>

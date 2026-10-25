@@ -1,0 +1,127 @@
+---
+import FirbaseAuth from "../react-componenets/FirebaseAuth.jsx";
+
+interface Props {
+    title?: string;
+    links?: { label: string; href: string }[];
+}
+
+const {
+    title = "Study Buddies",
+    links = [
+        { label: "Home", href: "/" },
+        { label: "Chat", href: "/chat" },
+        { label: "Help", href: "/help" },
+    ],
+} = Astro.props;
+
+// Used to mark the link for the page you are on
+const current = Astro.url.pathname;
+---
+
+<header class="navbar">
+    <nav class="inner" aria-label="Main">
+        <a class="brand" href="/">
+            {title}
+        </a>
+
+        <ul class="links">
+            {links.map((link) => (
+                <li>
+                    <a
+                        href={link.href}
+                        aria-current={
+                            current === link.href ? "page" : undefined
+                        }
+                    >
+                        {link.label}
+                    </a>
+                </li>
+            ))}
+        </ul>
+
+        <div class="auth">
+            <FirbaseAuth client:load compact />
+        </div>
+    </nav>
+</header>
+
+<style>
+    .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--base, #1e1e2e);
+        border-bottom: 1px solid var(--surface, #313244);
+    }
+
+    .inner {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+        min-height: 64px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    .brand {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text, #cdd6f4);
+        text-decoration: none;
+    }
+
+    .links {
+        display: flex;
+        gap: 24px;
+        flex: 1; /* pushes the sign in button to the right */
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .links a {
+        color: var(--subtext, #a6adc8);
+        text-decoration: none;
+        padding: 4px 0;
+        border-bottom: 2px solid transparent;
+    }
+
+    .links a:hover {
+        color: var(--text, #cdd6f4);
+    }
+
+    /* The current page gets a colored underline */
+    .links a[aria-current="page"] {
+        color: var(--text, #cdd6f4);
+        border-bottom-color: var(--accent, #cba6f7);
+    }
+
+    .links a:focus-visible,
+    .brand:focus-visible {
+        outline: 2px solid var(--accent, #cba6f7);
+        outline-offset: 4px;
+    }
+
+    /* On phones the links drop to their own row */
+    @media (max-width: 640px) {
+        .inner {
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            padding: 12px 16px;
+        }
+
+        .brand {
+            flex: 1;
+        }
+
+        .links {
+            order: 3;
+            width: 100%;
+            flex: none;
+            gap: 16px;
+            overflow-x: auto;
+        }
+    }
+</style>
