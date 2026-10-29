@@ -1,0 +1,20 @@
+Title	URL	Milestone	Deliverable / Sprint	User Story	Story Type	Priority	Estimate (Story Points)	Status
+Fix: Cannot sign in with google when working on the local dev server remotely	https://github.com/COS420-F25/F26-Group-A/issues/67			Yes	Technical work	Low		Product Backlog
+Add Styling to Site, (theme, main style.css. Get Collaboraite Style sheet from Greg)				Yes	Technical work		2	Product Backlog
+As an instructor, I want students grouped with peers who share similar experiences so that they feel safe being open about their struggles.	https://github.com/COS420-F25/F26-Group-A/issues/68			Yes				Product Backlog
+As a student, I want to fill out a survey on my challenges and schedule so that I'm matched with people who share them.	https://github.com/COS420-F25/F26-Group-A/issues/69			Yes				Product Backlog
+As an instructor, I want the system to suggest group matches based on student similarity so that I spend less time manually organizing groups.	https://github.com/COS420-F25/F26-Group-A/issues/70			Yes				Product Backlog
+As an instructor, I want to have a system to ensure that students can reach out to me with any concerns, issues, or questions.	https://github.com/COS420-F25/F26-Group-A/issues/71			Yes				Product Backlog
+As an instructor, I want to be able to change around groups at any given moment so that in the event a group doesn’t mesh well I can move them around.	https://github.com/COS420-F25/F26-Group-A/issues/72			Yes				Product Backlog
+As an instructor, I want my students to see only their own group so that other students' details stay private.	https://github.com/COS420-F25/F26-Group-A/issues/73			Yes				Product Backlog
+As an instructor, I want to see which students couldn't be placed so that no one is left without a group.	https://github.com/COS420-F25/F26-Group-A/issues/74			Yes				Product Backlog
+As a student, I want to be able to view others' profiles so that I can get to know them slightly before we meet.	https://github.com/COS420-F25/F26-Group-A/issues/75			Yes				Product Backlog
+As a student, I want my group to get periodic check-in notifications  prompts so that engagement doesn't fade once the novelty wears off.	https://github.com/COS420-F25/F26-Group-A/issues/76			Yes				Product Backlog
+As a student, I want to be auto-matched into a group after a short survey so that I don't have to initiate contact myself.	https://github.com/COS420-F25/F26-Group-A/issues/77			Yes				Product Backlog
+As a student, I want to read a short explanation of how reflection groups work so that I understand what I'm signing up for.	https://github.com/COS420-F25/F26-Group-A/issues/78			Yes				Product Backlog
+As a student, I want to see research evidence on reflection groups so that I'm convinced they're worth my time.	https://github.com/COS420-F25/F26-Group-A/issues/79			Yes				Product Backlog
+As a student, I want to search and filter profiles by course and study method so that I can find compatible partners without an instructor.	https://github.com/COS420-F25/F26-Group-A/issues/80			Yes				Product Backlog
+As a group member, I want a weekly agenda in the group space so that our meetings stay structured.	https://github.com/COS420-F25/F26-Group-A/issues/81			Yes				Product Backlog
+As a group member, I want to sync group meetings to my calendar so that I don't miss any sessions.	https://github.com/COS420-F25/F26-Group-A/issues/82			Yes				Product Backlog
+As a student, I want to blacklist specific users so that I'm never placed in a group with them.	https://github.com/COS420-F25/F26-Group-A/issues/83			Yes				Product Backlog
+As an instructor, I want to launch a reflection group from a pre-made template so that setup takes minutes, not hours.	https://github.com/COS420-F25/F26-Group-A/issues/84			Yes				Product Backlog
