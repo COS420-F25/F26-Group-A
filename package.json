@@ -10,7 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "host": "astro dev --host"
+    "host": "astro dev --host",
+    "test": "jest"
   },
   "dependencies": {
     "@astrojs/react": "^7.1.1",
@@ -27,5 +28,16 @@
   },
   "overrides": {
     "@grpc/grpc-js": "^1.14.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^8.1.0",
+    "@babel/preset-env": "^8.0.7",
+    "@babel/preset-react": "^8.0.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "babel-jest": "^30.5.2",
+    "jest": "^30.5.2",
+    "jest-environment-jsdom": "^30.5.2",
+    "jsdom": "^30.1.3"
   }
 }
