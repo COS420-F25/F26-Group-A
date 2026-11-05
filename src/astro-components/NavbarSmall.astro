@@ -6,8 +6,13 @@ interface Props {
     links?: { label: string; href: string }[];
 }
 
-const { title = "My App", links = [{ label: "Home", href: "/" }] } =
-    Astro.props;
+const {
+    title = "Study Buddies",
+    links = [
+        { label: "Home", href: "/" },
+        { label: "Survey", href: "/survey" },
+    ],
+} = Astro.props;
 
 const current = Astro.url.pathname;
 ---

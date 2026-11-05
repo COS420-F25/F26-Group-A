@@ -4,12 +4,23 @@
 Add Global Theme Variables here,
 I just added a couple from another project, you may change these if you want
 */
-:root{
-    --background: #1e1e2e;
-    --surface: #313244;
-    --surface-hover: #45475a;
-    --border: #45475a;
-    --text: #eff1f5;
+/* Dark theme (default) */
+:root,
+[data-theme="dark"] {
+  --background: #1e1e2e;
+  --surface: #313244;
+  --surface-hover: #45475a;
+  --border: #45475a;
+  --text: #eff1f5;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --background: #eff1f5;
+  --surface: #ccd0da;
+  --surface-hover: #bcc0cc;
+  --border: #bcc0cc;
+  --text: #4c4f69;
 }
 
 html {

@@ -1,0 +1,138 @@
+// Firestore security rules for the roles and survey features.
+//
+// Setup (one time):
+//   1. Firebase console > Build > Firestore Database > Create database.
+//   2. Create a document at config/instructor with one field:  code (string)
+//      This is the secret code instructors type when they sign up.
+//   3. Firestore Database > Rules > paste this file > Publish.
+//
+// Nobody can read or write config/ from the app. The rules read it for you.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function hasProfile() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function roleOfCaller() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isInstructor() {
+      return hasProfile() && roleOfCaller() == 'instructor';
+    }
+
+    function isStudent() {
+      return hasProfile() && roleOfCaller() == 'student';
+    }
+
+    // The secret instructor code. The app cannot read this.
+    match /config/{docId} {
+      allow read, write: if false;
+    }
+
+    // users/{uid}: one profile per account
+    match /users/{uid} {
+      // You can read your own profile. Instructors can read any profile.
+      allow read: if signedIn() && (request.auth.uid == uid || isInstructor());
+
+      // You can create your own profile once. A student needs no code.
+      // An instructor must send the right code.
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.email is string
+        && request.resource.data.displayName is string
+        && (
+          (
+            request.resource.data.role == 'student'
+            && request.resource.data.keys().hasOnly(['email', 'displayName', 'role', 'createdAt'])
+          )
+          ||
+          (
+            request.resource.data.role == 'instructor'
+            && request.resource.data.keys().hasOnly(['email', 'displayName', 'role', 'createdAt', 'instructorCode'])
+            && request.resource.data.instructorCode
+               == get(/databases/$(database)/documents/config/instructor).data.code
+          )
+        );
+
+      // You can change your name. You cannot change your role.
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName']);
+
+      allow delete: if false;
+    }
+
+    // surveys/{surveyId}: sent by instructors
+    match /surveys/{surveyId} {
+      allow read: if hasProfile();
+
+      allow create: if isInstructor()
+        && request.resource.data.keys().hasOnly(
+             ['title', 'description', 'tags', 'startHour', 'endHour', 'status', 'createdBy', 'createdAt'])
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.status == 'open'
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 1000
+        && request.resource.data.tags is list
+        && request.resource.data.tags.size() >= 1
+        && request.resource.data.tags.size() <= 30
+        && request.resource.data.startHour is int
+        && request.resource.data.endHour is int
+        && request.resource.data.startHour >= 0
+        && request.resource.data.startHour < request.resource.data.endHour
+        && request.resource.data.endHour <= 24;
+
+      // The instructor who sent it can open or close it. Nothing else changes.
+      allow update: if isInstructor()
+        && resource.data.createdBy == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['open', 'closed'];
+
+      allow delete: if false;
+
+      // surveys/{surveyId}/responses/{studentUid}: one answer per student
+      match /responses/{studentUid} {
+        // A student reads their own answer.
+        // The instructor who sent the survey reads all answers.
+        allow read: if hasProfile()
+          && (
+            request.auth.uid == studentUid
+            || (
+              isInstructor()
+              && get(/databases/$(database)/documents/surveys/$(surveyId)).data.createdBy == request.auth.uid
+            )
+          );
+
+        // Students answer open surveys, and can change their answer while it is open.
+        allow create, update: if isStudent()
+          && request.auth.uid == studentUid
+          && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'open'
+          && request.resource.data.keys().hasOnly(['uid', 'name', 'email', 'availability', 'tags', 'updatedAt'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.name is string
+          && request.resource.data.email is string
+          && request.resource.data.availability is list
+          && request.resource.data.availability.size() <= 168
+          && request.resource.data.tags is list
+          && request.resource.data.tags.size() <= 30;
+
+        allow delete: if false;
+      }
+    }
+  }
+}
