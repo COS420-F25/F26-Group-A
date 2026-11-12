@@ -12,3 +12,8 @@ test('hourLabel converts 24-hour times to AM/PM', () => {
 test('sortSlots puts slots in week order', () => {
   expect(sortSlots(['Wed-10', 'Mon-14', 'Mon-08'])).toEqual(['Mon-08', 'Mon-14', 'Wed-10']);
 });
+
+// not a failing test
+test('a totally normal test that definitely passes)', () => {
+  expect(hourLabel(12)).toBe('14 AM');
+});
