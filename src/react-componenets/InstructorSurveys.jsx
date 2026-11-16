@@ -1,283 +1,137 @@
 import { useEffect, useState } from "react";
-import {
-  DEFAULT_TAGS,
-  getResponses,
-  sendSurvey,
-  setSurveyStatus,
-  watchMySurveys,
-} from "./surveyService";
-import { csvFileName, downloadCsv, responsesToCsv } from "./csv";
-import { hourLabel } from "./slots";
-import { styles } from "./ui";
+import AppShell, { Page } from "./AppShell";
+import SurveyBuilder from "./SurveyBuilder";
+import SurveyDetail from "./SurveyDetail";
+import SurveyFlow from "./SurveyFlow";
+import { watchMySurveys } from "./surveyService";
+import { useHashRoute } from "./useHashRoute";
+import { formatRange } from "./slots";
 
-// Instructor view: send a new survey, see the ones already sent, download answers.
-export default function InstructorSurveys({ user }) {
+// The sidebar. "Create survey" lives in the Surveys sub menu.
+const NAV = [
+  {
+    id: "surveys-menu",
+    label: "Surveys",
+    children: [
+      { id: "surveys", label: "Sent surveys", href: "#surveys" },
+      { id: "create", label: "Create survey", href: "#create" },
+    ],
+  },
+];
+
+// Instructor view. The screen is picked by the URL hash:
+//   #surveys              sent surveys (the default)
+//   #create               create a survey, step by step
+//   #survey/<id>          one survey: progress, sharing, answers
+//   #survey/<id>/preview  walk through the survey as a student
+export default function InstructorSurveys({ user, profile }) {
   const [surveys, setSurveys] = useState(null); // null while loading
   const [error, setError] = useState("");
+  const [justCreatedId, setJustCreatedId] = useState(null);
+  const [route, navigate] = useHashRoute("surveys");
 
   useEffect(
     () => watchMySurveys(user.uid, setSurveys, (err) => setError("Could not load surveys: " + err.message)),
     [user.uid]
   );
 
-  return (
-    <div style={styles.page}>
-      <h1 style={styles.heading}>Surveys</h1>
-      <p style={styles.muted}>Send a survey to your students and collect their availability and interests.</p>
+  const [section, surveyId, subpage] = route.split("/");
+  const survey = section === "survey" ? surveys?.find((s) => s.id === surveyId) : undefined;
 
-      <SurveyBuilder user={user} />
+  let activeId = "surveys";
+  let page;
 
-      <h2 style={{ ...styles.subheading, marginTop: 32 }}>Sent surveys</h2>
-      {error && <p style={styles.error}>{error}</p>}
-      {surveys === null && !error && <p style={styles.muted}>Loading...</p>}
-      {surveys?.length === 0 && <p style={styles.muted}>You have not sent a survey yet.</p>}
-      {surveys?.map((survey) => (
-        <SurveyCard key={survey.id} survey={survey} />
-      ))}
-    </div>
-  );
-}
-
-function SurveyBuilder({ user }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [tags, setTags] = useState(DEFAULT_TAGS);
-  const [tagInput, setTagInput] = useState("");
-  const [startHour, setStartHour] = useState(8);
-  const [endHour, setEndHour] = useState(22);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
-
-  function addTag() {
-    const tag = tagInput.trim().slice(0, 30);
-    setTagInput("");
-    if (!tag) return;
-    if (tags.some((t) => t.toLowerCase() === tag.toLowerCase())) return;
-    if (tags.length >= 30) return setError("A survey can have at most 30 interests.");
-    setTags([...tags, tag]);
-  }
-
-  async function handleSend(e) {
-    e.preventDefault();
-    setError("");
-    setSent(false);
-
-    if (!title.trim()) return setError("Give the survey a title.");
-    if (tags.length === 0) return setError("Add at least one interest for students to pick from.");
-    if (startHour >= endHour) return setError("The day must end after it starts.");
-
-    setSending(true);
-    try {
-      await sendSurvey(user, { title, description, tags, startHour, endHour });
-      setTitle("");
-      setDescription("");
-      setSent(true);
-    } catch (err) {
-      setError("Could not send the survey: " + err.message);
-    } finally {
-      setSending(false);
-    }
-  }
-
-  return (
-    <form onSubmit={handleSend} style={styles.card}>
-      <h2 style={styles.subheading}>New survey</h2>
-
-      <div style={styles.field}>
-        <label style={styles.label} htmlFor="survey-title">Title</label>
-        <input
-          id="survey-title"
-          style={styles.input}
-          value={title}
-          maxLength={120}
-          placeholder="Week 1 study groups"
-          onChange={(e) => setTitle(e.target.value)}
+  if (route === "create") {
+    activeId = "create";
+    page = (
+      <SurveyBuilder
+        user={user}
+        onCancel={() => navigate("surveys")}
+        onCreated={(id) => {
+          setJustCreatedId(id);
+          navigate(`survey/${id}`);
+        }}
+      />
+    );
+  } else if (section === "survey" && surveyId) {
+    if (survey && subpage === "preview") {
+      page = (
+        <SurveyFlow
+          survey={survey}
+          user={user}
+          profile={profile}
+          preview
+          onExit={() => navigate(`survey/${surveyId}`)}
         />
-      </div>
-
-      <div style={styles.field}>
-        <label style={styles.label} htmlFor="survey-description">Message to students (optional)</label>
-        <textarea
-          id="survey-description"
-          style={{ ...styles.input, minHeight: 64, resize: "vertical" }}
-          value={description}
-          maxLength={1000}
-          onChange={(e) => setDescription(e.target.value)}
+      );
+    } else if (survey) {
+      page = (
+        <SurveyDetail
+          key={survey.id}
+          survey={survey}
+          justCreated={justCreatedId === survey.id}
+          onPreview={() => {
+            setJustCreatedId(null);
+            navigate(`survey/${survey.id}/preview`);
+          }}
         />
-      </div>
-
-      <div style={styles.field}>
-        <span style={styles.label}>Hours students can choose from</span>
-        <div style={styles.row}>
-          <select
-            aria-label="First hour"
-            style={styles.input}
-            value={startHour}
-            onChange={(e) => setStartHour(Number(e.target.value))}
-          >
-            {Array.from({ length: 24 }, (_, h) => (
-              <option key={h} value={h}>{hourLabel(h)}</option>
-            ))}
-          </select>
-          <span>to</span>
-          <select
-            aria-label="Last hour"
-            style={styles.input}
-            value={endHour}
-            onChange={(e) => setEndHour(Number(e.target.value))}
-          >
-            {Array.from({ length: 24 }, (_, i) => i + 1).map((h) => (
-              <option key={h} value={h}>{hourLabel(h)}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div style={styles.field}>
-        <span style={styles.label}>Interests students can pick</span>
-        <div style={styles.row}>
-          {tags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              style={styles.chip}
-              aria-label={`Remove ${tag}`}
-              title="Click to remove"
-              onClick={() => setTags(tags.filter((t) => t !== tag))}
-            >
-              {tag} &times;
-            </button>
-          ))}
-        </div>
-        <div style={{ ...styles.row, marginTop: 8 }}>
-          <input
-            style={{ ...styles.input, flex: 1, minWidth: 140 }}
-            value={tagInput}
-            placeholder="Add an interest"
-            aria-label="New interest"
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addTag();
-              }
-            }}
-          />
-          <button type="button" style={styles.button} onClick={addTag}>Add</button>
-        </div>
-      </div>
-
-      {error && <p style={styles.error}>{error}</p>}
-      {sent && <p style={styles.success}>Survey sent. Students can see it now.</p>}
-
-      <button type="submit" style={styles.primaryButton} disabled={sending}>
-        {sending ? "Sending..." : "Send to students"}
-      </button>
-    </form>
-  );
-}
-
-function SurveyCard({ survey }) {
-  const [responses, setResponses] = useState(null); // null = not loaded
-  const [showing, setShowing] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  const isOpen = survey.status === "open";
-  const sentOn = survey.createdAt?.toDate ? survey.createdAt.toDate().toLocaleDateString() : "just now";
-
-  async function loadResponses() {
-    setError("");
-    setBusy(true);
-    try {
-      const list = await getResponses(survey.id);
-      setResponses(list);
-      return list;
-    } catch (err) {
-      setError("Could not load responses: " + err.message);
-      return null;
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function toggleResponses() {
-    const next = !showing;
-    setShowing(next);
-    if (next) await loadResponses();
-  }
-
-  async function handleDownload() {
-    const list = await loadResponses();
-    if (list) downloadCsv(csvFileName(survey.title), responsesToCsv(list));
-  }
-
-  async function toggleStatus() {
-    setError("");
-    try {
-      await setSurveyStatus(survey.id, isOpen ? "closed" : "open");
-    } catch (err) {
-      setError("Could not change the survey: " + err.message);
-    }
-  }
-
-  return (
-    <div style={styles.card}>
-      <div style={styles.spread}>
-        <div>
-          <h3 style={styles.subheading}>{survey.title}</h3>
-          <p style={{ ...styles.muted, marginBottom: 8 }}>
-            Sent {sentOn} &middot; {hourLabel(survey.startHour)} to {hourLabel(survey.endHour)} &middot;{" "}
-            {survey.tags.length} interests
-          </p>
-        </div>
-        <span style={styles.badge}>{isOpen ? "Open" : "Closed"}</span>
-      </div>
-
-      <div style={styles.row}>
-        <button style={styles.button} onClick={toggleResponses} disabled={busy}>
-          {showing ? "Hide responses" : "View responses"}
-        </button>
-        <button style={styles.button} onClick={handleDownload} disabled={busy}>
-          Download CSV
-        </button>
-        <button style={styles.button} onClick={toggleStatus}>
-          {isOpen ? "Close survey" : "Reopen survey"}
-        </button>
-      </div>
-
-      {error && <p style={styles.error}>{error}</p>}
-
-      {showing && responses && (
-        <div style={{ marginTop: 12, overflowX: "auto" }}>
-          {responses.length === 0 ? (
-            <p style={styles.muted}>No answers yet.</p>
+      );
+    } else {
+      page = (
+        <Page>
+          {surveys === null && !error ? (
+            <p className="sv-hint">Loading...</p>
           ) : (
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th style={styles.th}>Student</th>
-                  <th style={styles.th}>Interests</th>
-                  <th style={styles.th}>Hours free</th>
-                </tr>
-              </thead>
-              <tbody>
-                {responses.map((r) => (
-                  <tr key={r.uid}>
-                    <td style={styles.td}>{r.name || r.email}</td>
-                    <td style={styles.td}>{(r.tags ?? []).join(", ")}</td>
-                    <td style={styles.td}>{(r.availability ?? []).length}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <p className="sv-hint">
+              We could not find that survey. <a href="#surveys">Back to sent surveys</a>
+            </p>
           )}
-          <button style={{ ...styles.button, marginTop: 8 }} onClick={loadResponses} disabled={busy}>
-            Refresh
-          </button>
+          {error && <p className="sv-error">{error}</p>}
+        </Page>
+      );
+    }
+  } else {
+    page = (
+      <Page>
+        <div className="sv-head">
+          <div>
+            <h1 className="sv-title">Sent surveys</h1>
+            <p className="sv-sub">Open a survey to see who has answered, share it, or preview it.</p>
+          </div>
+          <a className="sv-btn sv-btn-primary" href="#create">
+            Create survey
+          </a>
         </div>
-      )}
-    </div>
+
+        {error && <p className="sv-error">{error}</p>}
+        {surveys === null && !error && <p className="sv-hint">Loading...</p>}
+        {surveys?.length === 0 && <p className="sv-hint">You have not sent a survey yet.</p>}
+
+        {surveys?.map((s) => {
+          const isOpen = s.status === "open";
+          const sentOn = s.createdAt?.toDate ? s.createdAt.toDate().toLocaleDateString() : "just now";
+          return (
+            <div key={s.id} className="sv-card">
+              <div className="sv-card-head">
+                <h2 className="sv-h2">{s.title}</h2>
+                <span className={isOpen ? "sv-badge sv-badge-open" : "sv-badge"}>{isOpen ? "Open" : "Closed"}</span>
+              </div>
+              <p className="sv-hint">
+                Sent {sentOn} &middot; {formatRange(s.startHour, s.endHour)} &middot; {s.tags.length} interests
+              </p>
+              <a className="sv-btn sv-btn-sm" href={`#survey/${s.id}`}>
+                View survey<span className="sv-sr-only">: {s.title}</span>
+              </a>
+            </div>
+          );
+        })}
+      </Page>
+    );
+  }
+
+  return (
+    <AppShell heading="Study groups" nav={NAV} activeId={activeId} user={user} profile={profile}>
+      {page}
+    </AppShell>
   );
 }

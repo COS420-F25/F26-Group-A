@@ -51,6 +51,31 @@ export function setSurveyStatus(surveyId, status) {
   return updateDoc(doc(db, "surveys", surveyId), { status });
 }
 
+// Live list of the answers to one survey, sorted by name.
+// Returns a function that stops listening.
+export function watchResponses(surveyId, onData, onError) {
+  return onSnapshot(
+    collection(db, "surveys", surveyId, "responses"),
+    (snap) => {
+      const list = snap.docs.map((d) => d.data());
+      list.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+      onData(list);
+    },
+    onError
+  );
+}
+
+// Every student account. The instructor page uses this to show who has not answered yet.
+export async function getStudents() {
+  const snap = await getDocs(query(collection(db, "users"), where("role", "==", "student")));
+  return snap
+    .docs.map((d) => {
+      const data = d.data();
+      return { uid: d.id, name: data.displayName || data.email || "", email: data.email || "" };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export async function getResponses(surveyId) {
   const snap = await getDocs(collection(db, "surveys", surveyId, "responses"));
   return snap.docs
@@ -65,14 +90,22 @@ export async function getMyResponse(surveyId, uid) {
   return snap.exists() ? snap.data() : null;
 }
 
-// availability: list of slots like "Mon-09". tags: list of interest names.
-export function saveResponse(surveyId, user, profile, { availability, tags }) {
+// availability: list of slots like "Mon-09". ifNeededAvailability: backup slots.
+// tags: list of interest names. gender: student's gender selection.
+export function saveResponse(
+  surveyId,
+  user,
+  profile,
+  { availability, ifNeededAvailability = [], tags, gender = "" }
+) {
   return setDoc(doc(db, "surveys", surveyId, "responses", user.uid), {
     uid: user.uid,
     name: profile.displayName || user.email || "",
     email: user.email || profile.email || "",
     availability: sortSlots(availability),
+    ifNeededAvailability: sortSlots(ifNeededAvailability),
     tags,
+    gender,
     updatedAt: serverTimestamp(),
   });
 }

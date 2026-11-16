@@ -11,17 +11,28 @@ export function csvCell(value) {
   return text;
 }
 
-// Columns: student_uid, name, email, updated_at, tags, availability
+// Columns: student_uid, name, email, gender, updated_at, tags, availability, if_needed_availability
 // Tags and availability are joined with semicolons.
 export function responsesToCsv(responses) {
-  const header = ["student_uid", "name", "email", "updated_at", "tags", "availability"];
+  const header = [
+    "student_uid",
+    "name",
+    "email",
+    "gender",
+    "updated_at",
+    "tags",
+    "availability",
+    "if_needed_availability",
+  ];
   const rows = responses.map((r) => [
     r.uid,
     r.name,
     r.email,
+    r.gender ?? "",
     r.updatedAt?.toDate ? r.updatedAt.toDate().toISOString() : "",
     (r.tags ?? []).join(";"),
     (r.availability ?? []).join(";"),
+    (r.ifNeededAvailability ?? []).join(";"),
   ]);
   return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
 }

@@ -121,15 +121,28 @@ service cloud.firestore {
         allow create, update: if isStudent()
           && request.auth.uid == studentUid
           && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'open'
-          && request.resource.data.keys().hasOnly(['uid', 'name', 'email', 'availability', 'tags', 'updatedAt'])
+          && request.resource.data.keys().hasOnly([
+            'uid',
+            'name',
+            'email',
+            'availability',
+            'ifNeededAvailability',
+            'tags',
+            'gender',
+            'updatedAt'
+          ])
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.updatedAt == request.time
           && request.resource.data.name is string
           && request.resource.data.email is string
           && request.resource.data.availability is list
           && request.resource.data.availability.size() <= 168
+          && request.resource.data.ifNeededAvailability is list
+          && request.resource.data.ifNeededAvailability.size() <= 168
           && request.resource.data.tags is list
-          && request.resource.data.tags.size() <= 30;
+          && request.resource.data.tags.size() <= 30
+          && request.resource.data.gender is string
+          && request.resource.data.gender.size() <= 100;
 
         allow delete: if false;
       }
