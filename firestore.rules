@@ -78,7 +78,7 @@ service cloud.firestore {
 
       allow create: if isInstructor()
         && request.resource.data.keys().hasOnly(
-             ['title', 'description', 'tags', 'startHour', 'endHour', 'status', 'createdBy', 'createdAt'])
+             ['title', 'description', 'questions', 'targetStudentUids', 'startHour', 'endHour', 'status', 'createdBy', 'createdAt'])
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.createdAt == request.time
         && request.resource.data.status == 'open'
@@ -87,9 +87,10 @@ service cloud.firestore {
         && request.resource.data.title.size() <= 120
         && request.resource.data.description is string
         && request.resource.data.description.size() <= 1000
-        && request.resource.data.tags is list
-        && request.resource.data.tags.size() >= 1
-        && request.resource.data.tags.size() <= 30
+        && request.resource.data.questions is list
+        && request.resource.data.questions.size() >= 1
+        && request.resource.data.questions.size() <= 30
+        && request.resource.data.targetStudentUids is list
         && request.resource.data.startHour is int
         && request.resource.data.endHour is int
         && request.resource.data.startHour >= 0
@@ -125,24 +126,14 @@ service cloud.firestore {
             'uid',
             'name',
             'email',
-            'availability',
-            'ifNeededAvailability',
-            'tags',
-            'gender',
+            'answers',
             'updatedAt'
           ])
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.updatedAt == request.time
           && request.resource.data.name is string
           && request.resource.data.email is string
-          && request.resource.data.availability is list
-          && request.resource.data.availability.size() <= 168
-          && request.resource.data.ifNeededAvailability is list
-          && request.resource.data.ifNeededAvailability.size() <= 168
-          && request.resource.data.tags is list
-          && request.resource.data.tags.size() <= 30
-          && request.resource.data.gender is string
-          && request.resource.data.gender.size() <= 100;
+          && request.resource.data.answers is map;
 
         allow delete: if false;
       }

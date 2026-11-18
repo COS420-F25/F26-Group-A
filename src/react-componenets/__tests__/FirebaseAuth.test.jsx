@@ -76,6 +76,11 @@ async function openPopover(user) {
   await user.click(screen.getByRole('button', { name: 'Sign in' }));
 }
 
+// The compact signed-in view is one button showing the name. Clicking it opens the menu.
+async function openProfileMenu(user, name = /Jane Doe/) {
+  await user.click(screen.getByRole('button', { name }));
+}
+
 async function fillSignIn(user, email = 'jane@example.com', password = 'hunter22') {
   await user.type(screen.getByPlaceholderText('Email'), email);
   await user.type(screen.getByPlaceholderText('Password'), password);
@@ -275,10 +280,20 @@ describe('FirebaseAuth – auth flow triggers', () => {
       expect(signOut).toHaveBeenCalledWith(auth);
     });
 
-    it('compact view: calls signOut(auth)', async () => {
+    it('compact view: opens the profile menu, then calls signOut(auth)', async () => {
       const { user } = renderAuth(signedIn, { compact: true });
+      // Sign out is inside the menu, so it is not on the page until the menu is open
+      expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument();
+      await openProfileMenu(user);
       await user.click(screen.getByRole('button', { name: 'Sign out' }));
       expect(signOut).toHaveBeenCalledWith(auth);
+    });
+
+    it('compact view: the menu closes after signing out', async () => {
+      const { user } = renderAuth(signedIn, { compact: true });
+      await openProfileMenu(user);
+      await user.click(screen.getByRole('button', { name: 'Sign out' }));
+      expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument();
     });
 
     it('finish-setup view: calls signOut(auth)', async () => {
@@ -464,21 +479,35 @@ describe('FirebaseAuth – error messages', () => {
 // =====================================================================
 describe('FirebaseAuth – state synchronization', () => {
   describe('loading', () => {
-    it("full: shows 'Loading...' and no form", () => {
+    it("compact: shows 'Loading...' and no sign-in button", () => {
+      renderAuth(loading, { compact: true });
+      expect(screen.getByText('Loading...')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Sign in' })).not.toBeInTheDocument();
+    });
+
+    it("full: has no loading message, it shows the sign-in form while loading", () => {
+      // Only the compact version has a loading state
       renderAuth(loading);
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
-      expect(screen.queryByPlaceholderText('Email')).not.toBeInTheDocument();
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
     });
 
-    it('compact: renders nothing', () => {
-      const { container } = renderAuth(loading, { compact: true });
-      expect(container).toBeEmptyDOMElement();
-    });
-
-    it('does not flash the finish-setup form while a signed-in user is still loading', () => {
-      renderAuth({ user: fbUser, profile: null, loading: true });
+    it('compact: does not flash the finish-setup button while a signed-in user is still loading', () => {
+      renderAuth({ user: fbUser, profile: null, loading: true }, { compact: true });
       expect(screen.getByText('Loading...')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Choose role' })).not.toBeInTheDocument();
       expect(screen.queryByText('Finish setting up')).not.toBeInTheDocument();
+    });
+
+    it('full: does not show the finish-setup form while a signed-in user is still loading', () => {
+      renderAuth({ user: fbUser, profile: null, loading: true });
+      expect(screen.queryByText('Finish setting up')).not.toBeInTheDocument();
+    });
+
+    it('compact: shows a short error when the profile could not be loaded', () => {
+      renderAuth({ user: fbUser, profile: null, loading: false, error: new Error('denied') }, { compact: true });
+      expect(screen.getByText('Auth error')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Choose role' })).not.toBeInTheDocument();
     });
   });
 
@@ -519,13 +548,49 @@ describe('FirebaseAuth – state synchronization', () => {
       expect(screen.queryByPlaceholderText('Email')).not.toBeInTheDocument();
     });
 
-    it('compact: shows name, role and Sign out inline', () => {
+    it('compact: shows the initial, name and role on one button, with the menu closed', () => {
       renderAuth(
         { ...signedIn, profile: { role: 'instructor', displayName: 'Prof X' } },
         { compact: true }
       );
+      const trigger = screen.getByRole('button', { name: /Prof X/ });
+      expect(trigger).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.getByText('P')).toBeInTheDocument();
       expect(screen.getByText('Prof X')).toBeInTheDocument();
       expect(screen.getByText('instructor')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument();
+    });
+
+    it('compact: the menu shows the name, email, role and a Sign out button', async () => {
+      const { user } = renderAuth(
+        { ...signedIn, profile: { role: 'instructor', displayName: 'Prof X' } },
+        { compact: true }
+      );
+      await openProfileMenu(user, /Prof X/);
+      expect(screen.getByRole('button', { name: /Prof X/ })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByText('jane@example.com')).toBeInTheDocument();
+      expect(screen.getByText('Role: instructor')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
+    });
+
+    it('compact: clicking the button again closes the menu', async () => {
+      const { user } = renderAuth(signedIn, { compact: true });
+      await openProfileMenu(user);
+      await openProfileMenu(user);
+      expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument();
+    });
+
+    it('compact: clicking outside the menu closes it', async () => {
+      const { user } = renderAuth(signedIn, { compact: true });
+      await openProfileMenu(user);
+      await user.click(document.body);
+      expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument();
+    });
+
+    it('compact: clicking inside the menu does not close it', async () => {
+      const { user } = renderAuth(signedIn, { compact: true });
+      await openProfileMenu(user);
+      await user.click(screen.getByText('Role: student'));
       expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
     });
 
@@ -564,18 +629,38 @@ describe('FirebaseAuth – state synchronization', () => {
       expect(screen.queryByText(/Signed in as/)).not.toBeInTheDocument();
     });
 
-    it("compact: popover opens automatically and shows 'Choose role'", async () => {
+    it("compact: shows a 'Choose role' button and the popover starts closed", () => {
       renderAuth(noRole, { compact: true });
       const toggle = screen.getByRole('button', { name: 'Choose role' });
-      expect(await screen.findByText('Finish setting up')).toBeInTheDocument();
-      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.queryByText('Finish setting up')).not.toBeInTheDocument();
     });
 
-    it('compact: popover can be dismissed manually', async () => {
+    it("compact: clicking 'Choose role' opens the finish-setup form, and clicking again closes it", async () => {
       const { user } = renderAuth(noRole, { compact: true });
-      await screen.findByText('Finish setting up');
-      await user.click(screen.getByRole('button', { name: 'Choose role' }));
+      const toggle = screen.getByRole('button', { name: 'Choose role' });
+
+      await user.click(toggle);
+      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByText('Finish setting up')).toBeInTheDocument();
+
+      await user.click(toggle);
       expect(screen.queryByText('Finish setting up')).not.toBeInTheDocument();
+    });
+
+    it('compact: clicking outside closes the finish-setup popover', async () => {
+      const { user } = renderAuth(noRole, { compact: true });
+      await user.click(screen.getByRole('button', { name: 'Choose role' }));
+      await user.click(document.body);
+      expect(screen.queryByText('Finish setting up')).not.toBeInTheDocument();
+    });
+
+    it('compact: the finish-setup popover saves the chosen role', async () => {
+      const { user } = renderAuth(noRole, { compact: true });
+      await user.click(screen.getByRole('button', { name: 'Choose role' }));
+      await user.click(screen.getByRole('button', { name: 'Continue' }));
+      await waitFor(() => expect(createProfile).toHaveBeenCalledTimes(1));
+      expect(createProfile.mock.calls[0][1]).toMatchObject({ role: 'student' });
     });
   });
 
@@ -607,21 +692,26 @@ describe('FirebaseAuth – state synchronization', () => {
       expect(screen.getByPlaceholderText('Email')).toBeInTheDocument();
     });
 
-    it('compact: popover auto-opens when a user appears without a role, and closes once a profile exists', async () => {
-      const { rerender } = renderAuth(loggedOut, { compact: true });
-      expect(screen.queryByText('Finish setting up')).not.toBeInTheDocument();
+    it("compact: a user with no role gets a 'Choose role' button, then the profile button once a role exists", async () => {
+      const { user, rerender } = renderAuth(loggedOut, { compact: true });
+      expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
 
       mockUseUserProfile.mockReturnValue(noRole);
       rerender(<FirebaseAuth compact />);
-      expect(await screen.findByText('Finish setting up')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Choose role' })).toBeInTheDocument();
+      expect(screen.queryByText('Finish setting up')).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Choose role' }));
+      expect(screen.getByText('Finish setting up')).toBeInTheDocument();
 
       mockUseUserProfile.mockReturnValue(signedIn);
       rerender(<FirebaseAuth compact />);
       expect(screen.queryByText('Finish setting up')).not.toBeInTheDocument();
-      expect(screen.getByText('Jane Doe')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Choose role' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Jane Doe/ })).toBeInTheDocument();
     });
 
-    it("shows 'Loading...' (not finish-setup) while the role is being saved right after sign-up", async () => {
+    it("shows the finish-setup form with a disabled 'Saving...' button while the role is being saved right after sign-up", async () => {
       const profileSave = deferred();
       createProfile.mockReturnValue(profileSave.promise);
 
@@ -634,8 +724,8 @@ describe('FirebaseAuth – state synchronization', () => {
       // Firebase now reports a user, but no profile yet
       mockUseUserProfile.mockReturnValue(noRole);
       rerender(<FirebaseAuth />);
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
-      expect(screen.queryByText('Finish setting up')).not.toBeInTheDocument();
+      expect(screen.getByText('Finish setting up')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Saving...' })).toBeDisabled();
 
       // profile saved → signed-in view
       mockUseUserProfile.mockReturnValue(signedIn);

@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import AppShell, { Page } from "./AppShell";
 import SurveyFlow from "./SurveyFlow";
-import { watchOpenSurveys } from "./surveyService";
+import { watchOpenSurveys } from "../utils/surveyService";
 
-// Student view: a list of open surveys, and the step-by-step form for the one they pick.
 export default function StudentSurveys({ user, profile }) {
-  const [surveys, setSurveys] = useState(null); // null while loading
-  const [selected, setSelected] = useState(null); // the survey being answered
+  const [surveys, setSurveys] = useState(null);
+  const [selected, setSelected] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(
@@ -14,12 +13,15 @@ export default function StudentSurveys({ user, profile }) {
     []
   );
 
+  const visibleSurveys = surveys?.filter(
+    (s) => !s.targetStudentUids || s.targetStudentUids.length === 0 || s.targetStudentUids.includes(user.uid)
+  );
+
   const nav = [{ id: "surveys", label: "Surveys", onSelect: () => setSelected(null) }];
 
   return (
     <AppShell heading="Study groups" nav={nav} activeId="surveys" user={user} profile={profile}>
       {selected ? (
-        // The survey is kept here, so answers are not lost if the instructor closes it
         <SurveyFlow
           key={selected.id}
           survey={selected}
@@ -37,12 +39,12 @@ export default function StudentSurveys({ user, profile }) {
           </div>
 
           {error && <p className="sv-error">{error}</p>}
-          {surveys === null && !error && <p className="sv-hint">Loading surveys...</p>}
-          {surveys?.length === 0 && (
+          {visibleSurveys === null && !error && <p className="sv-hint">Loading surveys...</p>}
+          {visibleSurveys?.length === 0 && (
             <p className="sv-hint">No surveys are open right now. Check back after your instructor sends one.</p>
           )}
 
-          {surveys?.map((survey) => (
+          {visibleSurveys?.map((survey) => (
             <div key={survey.id} className="sv-card">
               <div className="sv-card-head">
                 <div>

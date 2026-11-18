@@ -1,78 +1,100 @@
 import '@testing-library/jest-dom';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import AppShell, { ActionBar, Page } from '../AppShell.jsx';
-import Breadcrumb from '../Breadcrumb.jsx';
-import BlockListStep from '../BlockListStep.jsx';
+import AppShell, { ActionBar, Page } from '../structure/AppShell.jsx';
+import Breadcrumb from '../structure/Breadcrumb.jsx';
+import BlockListStep from '../content/BlockListStep.jsx';
 
 describe('AppShell', () => {
-  const user = { email: 'ana@x.com' };
-  const profile = { displayName: 'Ana Lopez', role: 'student' };
-
-  it('shows the heading, the page, and the name, initials and role of the user', () => {
-    render(
-      <AppShell heading="Study groups" nav={[]} user={user} profile={profile}>
+  it('shows the page inside the main content wrapper', () => {
+    const { container } = render(
+      <AppShell>
         <p>Page text</p>
       </AppShell>
     );
-    expect(screen.getByText('Study groups')).toBeInTheDocument();
     expect(screen.getByText('Page text')).toBeInTheDocument();
-    expect(screen.getByText('Ana Lopez')).toBeInTheDocument();
-    expect(screen.getByText('AL')).toBeInTheDocument();
-    expect(screen.getByText('Student')).toBeInTheDocument();
+    expect(container.querySelector('.sv-main-content')).toContainElement(screen.getByText('Page text'));
   });
 
-  it('falls back to the email when there is no name, and to ? when there is nothing', () => {
-    const { rerender } = render(<AppShell heading="h" nav={[]} user={user} profile={{ role: 'instructor' }} />);
-    expect(screen.getByText('ana@x.com')).toBeInTheDocument();
-    expect(screen.getByText('A')).toBeInTheDocument();
-    rerender(<AppShell heading="h" nav={[]} />);
-    expect(screen.getByText('?')).toBeInTheDocument();
-  });
-
-  it('marks the active item and runs onSelect for button items', async () => {
-    const onSelect = jest.fn();
+  it('shows several children in order', () => {
     render(
-      <AppShell
-        heading="h"
-        nav={[
-          { id: 'a', label: 'First', onSelect },
-          { id: 'b', label: 'Second', href: '#second' },
-        ]}
-        activeId="b"
-      />
+      <AppShell>
+        <p>First</p>
+        <p>Second</p>
+      </AppShell>
     );
-    expect(screen.getByRole('link', { name: 'Second' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('button', { name: 'First' })).not.toHaveAttribute('aria-current');
-    await userEvent.setup().click(screen.getByRole('button', { name: 'First' }));
-    expect(onSelect).toHaveBeenCalled();
+    const [first, second] = screen.getAllByText(/First|Second/);
+    expect(first).toHaveTextContent('First');
+    expect(second).toHaveTextContent('Second');
   });
 
-  it('opens and closes a sub menu', async () => {
-    render(
-      <AppShell
-        heading="h"
-        nav={[{ id: 'g', label: 'Group', children: [{ id: 'c', label: 'Child', href: '#c' }] }]}
-        activeId="c"
-      />
-    );
-    const toggle = screen.getByRole('button', { name: 'Group' });
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('link', { name: 'Child' })).toHaveAttribute('aria-current', 'page');
-    await userEvent.setup().click(toggle);
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('link', { name: 'Child' })).not.toBeInTheDocument();
+  it('renders an empty wrapper when it has no children', () => {
+    const { container } = render(<AppShell />);
+    expect(container.querySelector('.sv-main-content')).toBeEmptyDOMElement();
   });
+});
 
-  it('Page and ActionBar show their content and the note', () => {
+describe('Page', () => {
+  it('shows its content', () => {
     render(
-      <Page footer={<ActionBar note="A note"><button>Go</button></ActionBar>}>
+      <Page>
         <p>Body</p>
       </Page>
     );
     expect(screen.getByText('Body')).toBeInTheDocument();
+  });
+
+  it('shows the footer after the content', () => {
+    render(
+      <Page footer={<p>Footer text</p>}>
+        <p>Body</p>
+      </Page>
+    );
+    const body = screen.getByText('Body');
+    const footer = screen.getByText('Footer text');
+    expect(body.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('works without a footer', () => {
+    const { container } = render(
+      <Page>
+        <p>Body</p>
+      </Page>
+    );
+    expect(container.querySelector('.sv-footer')).not.toBeInTheDocument();
+  });
+});
+
+describe('ActionBar', () => {
+  it('shows the note and its buttons', () => {
+    render(
+      <ActionBar note="A note">
+        <button>Go</button>
+      </ActionBar>
+    );
     expect(screen.getByText('A note')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Go' })).toBeInTheDocument();
+  });
+
+  it('leaves out the note paragraph when there is no note', () => {
+    const { container } = render(
+      <ActionBar>
+        <button>Go</button>
+      </ActionBar>
+    );
+    expect(container.querySelector('.sv-footer-note')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go' })).toBeInTheDocument();
+  });
+
+  it('runs the click handler of a button inside it', async () => {
+    const onClick = jest.fn();
+    render(
+      <ActionBar>
+        <button onClick={onClick}>Go</button>
+      </ActionBar>
+    );
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Go' }));
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -1,6 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-// Mock firebase modules completely to prevent ESM loading issues in Jest
 jest.mock('firebase/auth', () => ({
   onAuthStateChanged: jest.fn(),
 }));

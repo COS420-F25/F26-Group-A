@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import AppShell, { Page } from "./AppShell";
 import SurveyBuilder from "./SurveyBuilder";
-import SurveyDetail from "./SurveyDetail";
+import SurveyDetail from "../content/SurveyDetail";
 import SurveyFlow from "./SurveyFlow";
-import { watchMySurveys } from "./surveyService";
-import { useHashRoute } from "./useHashRoute";
-import { formatRange } from "./slots";
+import { watchMySurveys } from "../utils/surveyService";
+import { useHashRoute } from "../useHashRoute";
+import { formatRange } from "../utils/slots";
 
 // The sidebar. "Create survey" lives in the Surveys sub menu.
 const NAV = [
@@ -110,6 +110,12 @@ export default function InstructorSurveys({ user, profile }) {
         {surveys?.map((s) => {
           const isOpen = s.status === "open";
           const sentOn = s.createdAt?.toDate ? s.createdAt.toDate().toLocaleDateString() : "just now";
+          const questionCount = s.questions?.length ?? s.tags?.length ?? 0;
+          const targetLabel =
+            s.targetStudentUids && s.targetStudentUids.length > 0
+              ? `${s.targetStudentUids.length} targeted student${s.targetStudentUids.length === 1 ? "" : "s"}`
+              : "All students";
+
           return (
             <div key={s.id} className="sv-card">
               <div className="sv-card-head">
@@ -117,7 +123,7 @@ export default function InstructorSurveys({ user, profile }) {
                 <span className={isOpen ? "sv-badge sv-badge-open" : "sv-badge"}>{isOpen ? "Open" : "Closed"}</span>
               </div>
               <p className="sv-hint">
-                Sent {sentOn} &middot; {formatRange(s.startHour, s.endHour)} &middot; {s.tags.length} interests
+                Sent {sentOn} &middot; {formatRange(s.startHour, s.endHour)} &middot; {questionCount} questions &middot; {targetLabel}
               </p>
               <a className="sv-btn sv-btn-sm" href={`#survey/${s.id}`}>
                 View survey<span className="sv-sr-only">: {s.title}</span>

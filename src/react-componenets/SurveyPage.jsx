@@ -1,6 +1,6 @@
 import RoleGate from "./RoleGate";
-import InstructorSurveys from "./InstructorSurveys";
-import StudentSurveys from "./StudentSurveys";
+import InstructorSurveys from "./structure/InstructorSurveys";
+import StudentSurveys from "./structure/StudentSurveys";
 
 // The /survey page. Instructors see the sending tools, students see the survey form.
 export default function SurveyPage() {

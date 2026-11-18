@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
-import { ActionBar, Page } from "./AppShell";
-import Breadcrumb from "./Breadcrumb";
-import { getStudents, setSurveyStatus, watchResponses } from "./surveyService";
-import { csvFileName, downloadCsv, responsesToCsv } from "./csv";
-import { formatRange } from "./slots";
+import { ActionBar, Page } from "../structure/AppShell";
+import Breadcrumb from "../structure/Breadcrumb";
+import { getStudents, setSurveyStatus, watchResponses } from "../utils/surveyService";
+import { csvFileName, downloadCsv, responsesToCsv } from "../utils/csv";
+import { formatRange } from "../utils/slots";
 
-// The steps from setting up a survey to publishing groups.
-// Only "Set up" and "Collect responses" exist so far.
 const LIFECYCLE = ["Set up", "Collect responses", "Match", "Review", "Publish"];
 
-// The message an instructor can copy and send to students
 function buildMessage(survey, link) {
   return [
     `Subject: ${survey.title}`,
@@ -22,11 +19,24 @@ function buildMessage(survey, link) {
   ].join("\n");
 }
 
-// The page for one survey: how many students have answered, how to share it,
-// who is still missing, and the answers so far.
+function formatAnswerCell(q, ans) {
+  if (ans == null || ans === "") return "—";
+  if (q.type === "availability") {
+    const avail = Array.isArray(ans) ? ans : ans.available ?? [];
+    const ifNeeded = !Array.isArray(ans) ? ans.ifNeeded ?? [] : [];
+    const parts = [`${avail.length} free`];
+    if (ifNeeded.length > 0) parts.push(`${ifNeeded.length} if needed`);
+    return parts.join(", ");
+  }
+  if (Array.isArray(ans)) {
+    return ans.length > 0 ? ans.join(", ") : "—";
+  }
+  return String(ans);
+}
+
 export default function SurveyDetail({ survey, justCreated, onPreview }) {
-  const [responses, setResponses] = useState(null); // null while loading
-  const [students, setStudents] = useState(null); // null while loading
+  const [responses, setResponses] = useState(null);
+  const [allStudents, setAllStudents] = useState(null);
   const [studentsFailed, setStudentsFailed] = useState(false);
   const [namesHidden, setNamesHidden] = useState(false);
   const [copied, setCopied] = useState("");
@@ -40,14 +50,13 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
   useEffect(() => {
     let cancelled = false;
     getStudents()
-      .then((list) => !cancelled && setStudents(list))
+      .then((list) => !cancelled && setAllStudents(list))
       .catch(() => !cancelled && setStudentsFailed(true));
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // The "Copied" label goes away after two seconds
   useEffect(() => {
     if (!copied) return undefined;
     const timer = setTimeout(() => setCopied(""), 2000);
@@ -58,11 +67,22 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
   const link = typeof window === "undefined" ? "/survey" : `${window.location.origin}/survey`;
   const message = buildMessage(survey, link);
 
+  // Filter down to targeted students if specific UIDs were selected
+  const targetSet =
+    survey.targetStudentUids && survey.targetStudentUids.length > 0 ? new Set(survey.targetStudentUids) : null;
+  const students = allStudents
+    ? targetSet
+      ? allStudents.filter((s) => targetSet.has(s.uid))
+      : allStudents
+    : null;
+
   const answeredCount = responses?.length ?? 0;
   const answeredIds = new Set((responses ?? []).map((r) => r.uid));
   const waiting = students ? students.filter((s) => !answeredIds.has(s.uid)) : [];
   const total = students?.length ?? 0;
   const percent = total > 0 ? Math.min(100, Math.round((answeredCount / total) * 100)) : 0;
+
+  const questions = survey.questions || [];
 
   async function copy(text, which) {
     try {
@@ -83,7 +103,7 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
   }
 
   function handleDownload() {
-    if (responses) downloadCsv(csvFileName(survey.title), responsesToCsv(responses));
+    if (responses) downloadCsv(csvFileName(survey.title), responsesToCsv(responses, questions));
   }
 
   const footer = (
@@ -149,27 +169,6 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
       </div>
 
       <div className="sv-two-col">
-        <div>
-          <div className="sv-card">
-            <h2 className="sv-h2">1 &middot; Share the survey link</h2>
-            <div className="sv-copy-row">
-              <p className="sv-code">{link}</p>
-              <button type="button" className="sv-btn sv-btn-sm" onClick={() => copy(link, "link")}>
-                {copied === "link" ? "Copied" : "Copy link"}
-              </button>
-            </div>
-          </div>
-
-          <div className="sv-card">
-            <div className="sv-card-head">
-              <h2 className="sv-h2">2 &middot; Send it with this message</h2>
-              <button type="button" className="sv-btn sv-btn-sm" onClick={() => copy(message, "message")}>
-                {copied === "message" ? "Copied" : "Copy message"}
-              </button>
-            </div>
-            <pre className="sv-code">{message}</pre>
-          </div>
-        </div>
 
         <div className="sv-card">
           <div className="sv-card-head">
@@ -211,16 +210,20 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
               <thead>
                 <tr>
                   <th scope="col">Student</th>
-                  <th scope="col">Interests</th>
-                  <th scope="col">Hours free</th>
+                  {questions.map((q) => (
+                    <th key={q.id} scope="col">
+                      {q.label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {responses.map((r) => (
                   <tr key={r.uid}>
                     <td>{r.name || r.email}</td>
-                    <td>{(r.tags ?? []).join(", ")}</td>
-                    <td>{(r.availability ?? []).length}</td>
+                    {questions.map((q) => (
+                      <td key={q.id}>{formatAnswerCell(q, r.answers?.[q.id])}</td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
