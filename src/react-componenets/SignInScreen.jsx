@@ -2,7 +2,7 @@ import { useState } from "react";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "./firebase";
 import { friendlyError } from "./authErrors.js";
-import { authStyles as s } from "/styles/authStyles.js";
+import { authStyles as s } from "./authStyles.js";
 import {
     AuthCard,
     FinishSetup,
