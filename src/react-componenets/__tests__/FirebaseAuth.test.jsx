@@ -14,6 +14,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../firebase';
 import { createProfile } from '../accounts';
+import { navigate } from '../navigate.js';
 import FirebaseAuth from '../FirebaseAuth.jsx';
 
 // ---------- Mocks ----------
@@ -72,10 +73,6 @@ function renderAuth(hookState = loggedOut, props = {}) {
   return { user, ...utils };
 }
 
-async function openPopover(user) {
-  await user.click(screen.getByRole('button', { name: 'Sign in' }));
-}
-
 // The compact signed-in view is one button showing the name. Clicking it opens the menu.
 async function openProfileMenu(user, name = /Jane Doe/) {
   await user.click(screen.getByRole('button', { name }));
@@ -107,6 +104,7 @@ beforeEach(() => {
   createProfile.mockResolvedValue();
   signInWithPopup.mockResolvedValue({ user: fbUser });
   signOut.mockResolvedValue();
+  jest.spyOn(navigate, 'to').mockImplementation(() => {});
 });
 
 // =====================================================================
@@ -143,19 +141,6 @@ describe('FirebaseAuth – auth flow triggers', () => {
       await waitFor(() => expect(submitButton()).toBeDisabled());
       d.resolve({ user: fbUser });
       await waitFor(() => expect(submitButton()).toBeEnabled());
-    });
-
-    it('works from the compact popover', async () => {
-      const { user } = renderAuth(loggedOut, { compact: true });
-      await openPopover(user);
-      await screen.findByPlaceholderText('Email');
-
-      await fillSignIn(user, 'c@d.com', 'pw123456');
-      await user.click(submitButton());
-
-      await waitFor(() =>
-        expect(signInWithEmailAndPassword).toHaveBeenCalledWith(auth, 'c@d.com', 'pw123456')
-      );
     });
 
     it('Firebase check when user logs in', async () => {
@@ -518,23 +503,10 @@ describe('FirebaseAuth – state synchronization', () => {
       expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument();
     });
 
-    it('compact: popover is closed by default', () => {
+    it('compact: shows Sign up and Sign in links to the full pages, no form', () => {
       renderAuth(loggedOut, { compact: true });
-      const toggle = screen.getByRole('button', { name: 'Sign in' });
-      expect(toggle).toHaveAttribute('aria-expanded', 'false');
-      expect(screen.queryByPlaceholderText('Email')).not.toBeInTheDocument();
-    });
-
-    it('compact: toggle opens and closes the popover', async () => {
-      const { user } = renderAuth(loggedOut, { compact: true });
-      const toggle = screen.getByRole('button', { name: 'Sign in' });
-
-      await user.click(toggle);
-      expect(toggle).toHaveAttribute('aria-expanded', 'true');
-      expect(screen.getByPlaceholderText('Email')).toBeInTheDocument();
-
-      await user.click(toggle);
-      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup');
+      expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/signin');
       expect(screen.queryByPlaceholderText('Email')).not.toBeInTheDocument();
     });
   });
@@ -694,7 +666,7 @@ describe('FirebaseAuth – state synchronization', () => {
 
     it("compact: a user with no role gets a 'Choose role' button, then the profile button once a role exists", async () => {
       const { user, rerender } = renderAuth(loggedOut, { compact: true });
-      expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
 
       mockUseUserProfile.mockReturnValue(noRole);
       rerender(<FirebaseAuth compact />);

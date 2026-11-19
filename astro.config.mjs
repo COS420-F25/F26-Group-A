@@ -7,6 +7,9 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   integrations: [react()],
 
+  // old mockup route
+  redirects: { '/login': '/signin' },
+
   vite: {
     plugins: [tailwindcss()]
   }
