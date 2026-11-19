@@ -1,41 +1,55 @@
-import '@testing-library/jest-dom';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import SurveyPage from '../SurveyPage';
+import { useUserProfile } from '../useUserProfile';
 
-global.fetch = global.fetch || jest.fn();
-
-// Mock dependencies to avoid ESM firebase import errors during testing
 jest.mock('../useUserProfile', () => ({
   useUserProfile: jest.fn(),
 }));
 
-import SurveyPage from '../SurveyPage.jsx';
-import { useUserProfile } from '../useUserProfile';
-
-jest.mock('../InstructorSurveys', () => () => <div>Instructor Dashboard</div>);
-jest.mock('../StudentSurveys', () => () => <div>Student Dashboard</div>);
+jest.mock('../structure/InstructorSurveys', () => () => <div>Instructor Dashboard</div>);
+jest.mock('../structure/StudentSurveys', () => () => <div>Student Dashboard</div>);
 
 describe('SurveyPage Component', () => {
-  it('renders InstructorSurveys when profile role is instructor', () => {
-    useUserProfile.mockReturnValue({
-      user: { uid: '1' },
-      profile: { role: 'instructor' },
-      loading: false,
-      error: null,
-    });
+  const mockUser = { uid: 'user-123', email: 'test@example.com' };
 
+  it('renders loading state when profile is loading', () => {
+    useUserProfile.mockReturnValue({ user: mockUser, profile: null, loading: true });
+    render(<SurveyPage />);
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  });
+
+  it('renders instructor dashboard when user profile has instructor role', () => {
+    useUserProfile.mockReturnValue({
+      user: mockUser,
+      profile: { role: 'instructor', displayName: 'Prof Smith' },
+      loading: false,
+    });
     render(<SurveyPage />);
     expect(screen.getByText('Instructor Dashboard')).toBeInTheDocument();
   });
 
-  it('renders StudentSurveys when profile role is student', () => {
+  it('renders student dashboard when user profile has student role', () => {
     useUserProfile.mockReturnValue({
-      user: { uid: '2' },
-      profile: { role: 'student' },
+      user: mockUser,
+      profile: { role: 'student', displayName: 'Student Sam' },
       loading: false,
-      error: null,
     });
-
     render(<SurveyPage />);
     expect(screen.getByText('Student Dashboard')).toBeInTheDocument();
+  });
+
+  it('asks the user to choose a role when no profile is saved yet', () => {
+    // useUserProfile gives profile: null until a role is saved
+    useUserProfile.mockReturnValue({
+      user: mockUser,
+      profile: null,
+      loading: false,
+    });
+    render(<SurveyPage />);
+    expect(screen.getByText(/finish setting up/i)).toBeInTheDocument();
+    expect(screen.queryByText('Instructor Dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByText('Student Dashboard')).not.toBeInTheDocument();
   });
 });

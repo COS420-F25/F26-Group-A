@@ -19,36 +19,63 @@ export function useUserProfile() {
 
   useEffect(() => {
     let stopProfile = () => {};
+    let resolved = false;
 
-    const stopAuth = onAuthStateChanged(auth, (user) => {
-      stopProfile();
-
-      if (!user) {
-        setState({ user: null, profile: null, loading: false, error: null });
-        return;
+    const fallbackTimer = setTimeout(() => {
+      if (!resolved) {
+        setState((prev) =>
+          prev.loading
+            ? {
+                ...prev,
+                loading: false,
+                error: new Error("Timed out connecting to authentication service."),
+              }
+            : prev
+        );
       }
+    }, 8000);
 
-      setState({ user, profile: null, loading: true, error: null });
+    const stopAuth = onAuthStateChanged(
+      auth,
+      (user) => {
+        resolved = true;
+        clearTimeout(fallbackTimer);
+        stopProfile();
 
-      // Listening live means the screen updates right after the role is saved
-      stopProfile = onSnapshot(
-        doc(db, "users", user.uid),
-        (snap) => {
-          setState({
-            user,
-            profile: snap.exists() ? snap.data() : null,
-            loading: false,
-            error: null,
-          });
-        },
-        (error) => {
-          console.error(error);
-          setState({ user, profile: null, loading: false, error });
+        if (!user) {
+          setState({ user: null, profile: null, loading: false, error: null });
+          return;
         }
-      );
-    });
+
+        setState({ user, profile: null, loading: true, error: null });
+
+        // Listening live means the screen updates right after the role is saved
+        stopProfile = onSnapshot(
+          doc(db, "users", user.uid),
+          (snap) => {
+            setState({
+              user,
+              profile: snap.exists() ? snap.data() : null,
+              loading: false,
+              error: null,
+            });
+          },
+          (error) => {
+            console.error(error);
+            setState({ user, profile: null, loading: false, error });
+          }
+        );
+      },
+      (error) => {
+        resolved = true;
+        clearTimeout(fallbackTimer);
+        console.error(error);
+        setState({ user: null, profile: null, loading: false, error });
+      }
+    );
 
     return () => {
+      clearTimeout(fallbackTimer);
       stopAuth();
       stopProfile();
     };

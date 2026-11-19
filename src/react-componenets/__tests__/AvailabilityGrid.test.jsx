@@ -1,12 +1,13 @@
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
-import AvailabilityGrid from '../AvailabilityGrid.jsx';
+import AvailabilityGrid from '../content/AvailabilityGrid.jsx';
 
 describe('AvailabilityGrid Component', () => {
   const defaultProps = {
     startHour: 9,
     endHour: 12,
     value: new Set(),
+    ifNeededValue: new Set(),
     onChange: jest.fn(),
     disabled: false,
   };
@@ -18,7 +19,7 @@ describe('AvailabilityGrid Component', () => {
   it('renders days of the week and hours correctly', () => {
     render(<AvailabilityGrid {...defaultProps} />);
 
-    expect(screen.getByRole('group', { name: /Weekly availability/i })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /Weekly availability chart/i })).toBeInTheDocument();
     expect(screen.getByText('Mon')).toBeInTheDocument();
     expect(screen.getByText('Sun')).toBeInTheDocument();
     expect(screen.getByText('9 AM')).toBeInTheDocument();
@@ -27,7 +28,7 @@ describe('AvailabilityGrid Component', () => {
 
   it('toggles time slot selection via click', () => {
     const onChange = jest.fn();
-    render(<AvailabilityGrid {...defaultProps} onChange={onChange} />);
+    render(<AvailabilityGrid {...defaultProps} onChange={onChange} mode="paint" />);
 
     const slotButton = screen.getByRole('button', { name: /Mon 9 AM/i });
     fireEvent.click(slotButton, { detail: 0 });
@@ -54,5 +55,39 @@ describe('AvailabilityGrid Component', () => {
     expect(screen.getByRole('button', { name: /Mon 9 AM/i })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: /Tue 10 AM/i })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: /Wed 9 AM/i })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  describe('mode', () => {
+    it('paint mode marks a cell and returns updated set', () => {
+      const onChange = jest.fn();
+      render(<AvailabilityGrid {...defaultProps} value={new Set(['Mon-09'])} mode="paint" onChange={onChange} />);
+
+      fireEvent.click(screen.getByRole('button', { name: /Tue 9 AM/i }), { detail: 0 });
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange.mock.calls[0][0].has('Tue-09')).toBe(true);
+    });
+
+    it('erase mode clears a marked cell', () => {
+      const onChange = jest.fn();
+      render(<AvailabilityGrid {...defaultProps} value={new Set(['Mon-09'])} mode="erase" onChange={onChange} />);
+
+      fireEvent.click(screen.getByRole('button', { name: /Mon 9 AM/i }), { detail: 0 });
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange.mock.calls[0][0].has('Mon-09')).toBe(false);
+    });
+
+    it('does not change the Set it was given', () => {
+      const value = new Set(['Mon-09']);
+      render(<AvailabilityGrid {...defaultProps} value={value} mode="paint" />);
+      fireEvent.click(screen.getByRole('button', { name: /Tue 9 AM/i }), { detail: 0 });
+      expect([...value]).toEqual(['Mon-09']);
+    });
+
+    it('a mouse click (detail 1) is left to pointer events', () => {
+      const onChange = jest.fn();
+      render(<AvailabilityGrid {...defaultProps} onChange={onChange} />);
+      fireEvent.click(screen.getByRole('button', { name: /Mon 9 AM/i }), { detail: 1 });
+      expect(onChange).not.toHaveBeenCalled();
+    });
   });
 });

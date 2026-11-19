@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -7,11 +7,10 @@ import {
   updateProfile,
   signOut,
 } from "firebase/auth";
-import { auth } from "./firebase"; // firebase.js must sit in this same folder
+import { auth } from "./firebase";
 import { useUserProfile } from "./useUserProfile";
 import { createProfile } from "./accounts";
 
-// Turns Firebase error codes into short messages
 function friendlyError(err) {
   switch (err.code) {
     case "permission-denied":
@@ -29,7 +28,6 @@ function friendlyError(err) {
   }
 }
 
-// Student / Instructor choice. Instructors also type the instructor code.
 function RoleFields({ role, setRole, code, setCode }) {
   return (
     <div style={styles.roleBox}>
@@ -66,11 +64,8 @@ function RoleFields({ role, setRole, code, setCode }) {
   );
 }
 
-// compact = true makes a small version for navbars:
-// a "Sign in" button that opens the form in a popup box
 export default function FirbaseAuth({ compact = false }) {
-  // user = Firebase login, profile = the saved role (null until one is chosen)
-  const { user, profile, loading } = useUserProfile();
+  const { user, profile, loading, error: profileError } = useUserProfile();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -81,11 +76,18 @@ export default function FirbaseAuth({ compact = false }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
 
-  // Open the popup when the user still needs to pick a role. Close it once they have.
+  // Close dropdown when clicking outside
   useEffect(() => {
-    setOpen(Boolean(user && !profile && !loading));
-  }, [user, profile, loading]);
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -104,8 +106,6 @@ export default function FirbaseAuth({ compact = false }) {
         await signInWithEmailAndPassword(auth, email, password);
       }
     } catch (err) {
-      // If the instructor code was wrong, the account exists but has no role yet.
-      // The "finish setup" form below lets them try again.
       setError(friendlyError(err));
     } finally {
       setBusy(false);
@@ -121,7 +121,6 @@ export default function FirbaseAuth({ compact = false }) {
     }
   };
 
-  // For people who signed in but have no role saved (Google sign-in, older accounts)
   const handleFinish = async (e) => {
     e.preventDefault();
     setError("");
@@ -139,35 +138,37 @@ export default function FirbaseAuth({ compact = false }) {
     }
   };
 
-  // Right after sign up, the role is still being saved
-  const savingRole = busy && user && !profile;
+  if (loading && compact) {
+    return <div style={styles.muted}>Loading...</div>;
+  }
 
-  if (loading || savingRole) return compact ? null : <p>Loading...</p>;
+  if (profileError && compact) {
+    return <div style={styles.error}>Auth error</div>;
+  }
 
-  // Signed in, but no role saved yet
-  if (user && !profile) {
+  // Signed in, but no profile/role saved yet
+  if (user && !profile && !loading) {
     const finishForm = (
-      <>
+      <div style={styles.cardContent}>
         <h3 style={styles.title}>Finish setting up</h3>
         <form onSubmit={handleFinish} style={styles.form}>
           <RoleFields role={role} setRole={setRole} code={code} setCode={setCode} />
-          <button type="submit" style={styles.primaryButton}>
-            Continue
+          <button type="submit" style={styles.primaryButton} disabled={busy}>
+            {busy ? "Saving..." : "Continue"}
           </button>
         </form>
         {error && <p style={styles.error}>{error}</p>}
-        <p style={styles.switchText}>
-          <button style={styles.link} onClick={() => signOut(auth)}>
-            Sign out
-          </button>
-        </p>
-      </>
+        <button style={styles.link} onClick={() => signOut(auth)}>
+          Sign out
+        </button>
+      </div>
     );
 
     if (compact) {
       return (
-        <div style={styles.wrapper}>
+        <div style={styles.wrapper} ref={menuRef}>
           <button
+            type="button"
             style={styles.smallButton}
             onClick={() => setOpen(!open)}
             aria-expanded={open}
@@ -181,24 +182,54 @@ export default function FirbaseAuth({ compact = false }) {
     return <div style={styles.box}>{finishForm}</div>;
   }
 
-  // Logged in view
-  if (user) {
-    const name = profile.displayName || user.displayName || user.email;
+  // Logged in view with a profile
+  if (user && profile) {
+    const displayName = profile.displayName || user.displayName || user.email || "Account";
+    const initials = displayName.charAt(0).toUpperCase();
+
     if (compact) {
       return (
-        <div style={styles.inline}>
-          <span style={styles.name}>{name}</span>
-          <span style={styles.badge}>{profile.role}</span>
-          <button style={styles.smallButton} onClick={() => signOut(auth)}>
-            Sign out
+        <div style={styles.wrapper} ref={menuRef}>
+          <button
+            type="button"
+            style={styles.profileTrigger}
+            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+          >
+            <span style={styles.avatar}>{initials}</span>
+            <div style={styles.userInfo}>
+              <span style={styles.userName}>{displayName}</span>
+              <span style={styles.userRole}>{profile.role}</span>
+            </div>
           </button>
+
+          {open && (
+            <div style={styles.popover}>
+              <div style={styles.dropdownHeader}>
+                <p style={styles.dropdownName}>{displayName}</p>
+                <p style={styles.dropdownEmail}>{user.email}</p>
+                <p style={styles.dropdownRole}>Role: {profile.role}</p>
+              </div>
+              <button
+                type="button"
+                style={{ ...styles.button, width: "100%" }}
+                onClick={() => {
+                  setOpen(false);
+                  signOut(auth);
+                }}
+              >
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
       );
     }
+
     return (
       <div style={styles.box}>
         <p>
-          Signed in as {name} <span style={styles.badge}>{profile.role}</span>
+          Signed in as {displayName} <span style={styles.badge}>{profile.role}</span>
         </p>
         <button style={styles.button} onClick={() => signOut(auth)}>
           Sign out
@@ -207,9 +238,9 @@ export default function FirbaseAuth({ compact = false }) {
     );
   }
 
-  // The login form, used by both views
+  // Logged out form content
   const form = (
-    <>
+    <div style={styles.cardContent}>
       <h3 style={styles.title}>{isSignUp ? "Create account" : "Sign in"}</h3>
 
       <form onSubmit={handleSubmit} style={styles.form}>
@@ -243,11 +274,11 @@ export default function FirbaseAuth({ compact = false }) {
           <RoleFields role={role} setRole={setRole} code={code} setCode={setCode} />
         )}
         <button type="submit" style={styles.primaryButton} disabled={busy}>
-          {isSignUp ? "Create account" : "Sign in"}
+          {busy ? "Loading..." : isSignUp ? "Create account" : "Sign in"}
         </button>
       </form>
 
-      <button style={styles.button} onClick={handleGoogle}>
+      <button type="button" style={styles.button} onClick={handleGoogle}>
         Continue with Google
       </button>
 
@@ -255,18 +286,18 @@ export default function FirbaseAuth({ compact = false }) {
 
       <p style={styles.switchText}>
         {isSignUp ? "Already have an account?" : "Need an account?"}{" "}
-        <button style={styles.link} onClick={() => setIsSignUp(!isSignUp)}>
+        <button type="button" style={styles.link} onClick={() => setIsSignUp(!isSignUp)}>
           {isSignUp ? "Sign in" : "Create one"}
         </button>
       </p>
-    </>
+    </div>
   );
 
-  // Logged out, navbar version
   if (compact) {
     return (
-      <div style={styles.wrapper}>
+      <div style={styles.wrapper} ref={menuRef}>
         <button
+          type="button"
           style={styles.smallButton}
           onClick={() => setOpen(!open)}
           aria-expanded={open}
@@ -278,34 +309,66 @@ export default function FirbaseAuth({ compact = false }) {
     );
   }
 
-  // Logged out, full version
   return <div style={styles.box}>{form}</div>;
 }
 
-// Colors use your site's CSS variables when they exist,
-// and fall back to Catppuccin Mocha when they don't
 const text = "var(--text, #cdd6f4)";
 const base = "var(--base, #1e1e2e)";
 const surface = "var(--surface, #313244)";
+const surfaceHover = "var(--surface-hover, #45475a)";
 const accent = "var(--accent, #cba6f7)";
+const muted = "var(--subtext, #a6adc8)";
 
 const styles = {
   box: { maxWidth: 320, margin: "40px auto", color: text },
-  wrapper: { position: "relative" },
+  wrapper: { position: "relative", width: "100%" },
   popover: {
     position: "absolute",
-    right: 0,
-    top: "calc(100% + 8px)",
-    width: "min(300px, 90vw)",
-    padding: 16,
+    left: 0,
+    bottom: "calc(100% + 8px)",
+    width: "14rem",
+    padding: 12,
     background: surface,
     color: text,
     borderRadius: 8,
     boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
-    zIndex: 10,
+    zIndex: 50,
   },
+  cardContent: { display: "flex", flexDirection: "column", gap: 8 },
+  profileTrigger: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    width: "100%",
+    padding: 4,
+    background: "transparent",
+    border: 0,
+    borderRadius: 6,
+    color: text,
+    cursor: "pointer",
+    textAlign: "left",
+  },
+  profileTriggerHover: { background: surfaceHover },
+  avatar: {
+    display: "grid",
+    placeItems: "center",
+    flex: "none",
+    width: 32,
+    height: 32,
+    borderRadius: 999,
+    background: accent,
+    color: base,
+    fontSize: 12,
+    fontWeight: 700,
+  },
+  userInfo: { display: "flex", flexDirection: "column", minWidth: 0 },
+  userName: { fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  userRole: { fontSize: 11, color: muted, textTransform: "capitalize" },
+  dropdownHeader: { paddingBottom: 8, marginBottom: 8, borderBottom: "1px solid var(--border, #45475a)" },
+  dropdownName: { margin: 0, fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  dropdownEmail: { margin: "2px 0 0", fontSize: 11, color: muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  dropdownRole: { margin: "2px 0 0", fontSize: 11, color: accent, textTransform: "capitalize" },
   inline: { display: "flex", alignItems: "center", gap: 10 },
-  name: { color: text, fontSize: "0.875rem" },
   badge: {
     fontSize: "0.75rem",
     padding: "1px 8px",
@@ -313,23 +376,22 @@ const styles = {
     border: "1px solid " + accent,
     color: text,
   },
-  title: { margin: "0 0 12px" },
-  form: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 },
-  roleBox: { display: "flex", flexDirection: "column", gap: 6 },
-  roleLabel: { fontSize: 14 },
-  radio: { fontSize: 14, cursor: "pointer" },
+  title: { margin: "0 0 8px", fontSize: 15 },
+  form: { display: "flex", flexDirection: "column", gap: 8 },
+  roleBox: { display: "flex", flexDirection: "column", gap: 4 },
+  roleLabel: { fontSize: 13 },
+  radio: { fontSize: 13, cursor: "pointer" },
   input: {
     padding: 8,
-    fontSize: 14,
+    fontSize: 13,
     background: base,
     color: text,
-    border: "1px solid transparent",
+    border: "1px solid var(--border, #45475a)",
     borderRadius: 6,
   },
   button: {
-    padding: 8,
-    fontSize: 14,
-    width: "100%",
+    padding: 6,
+    fontSize: 13,
     cursor: "pointer",
     background: "transparent",
     color: text,
@@ -338,7 +400,7 @@ const styles = {
   },
   primaryButton: {
     padding: 8,
-    fontSize: 14,
+    fontSize: 13,
     cursor: "pointer",
     background: accent,
     color: base,
@@ -347,8 +409,9 @@ const styles = {
     fontWeight: 600,
   },
   smallButton: {
-    padding: "4px 12px",
-    fontSize: "0.875rem",
+    padding: "6px 10px",
+    fontSize: "0.8125rem",
+    width: "100%",
     cursor: "pointer",
     background: "transparent",
     color: text,
@@ -361,8 +424,10 @@ const styles = {
     color: accent,
     cursor: "pointer",
     padding: 0,
-    fontSize: "inherit",
+    fontSize: "12px",
+    textAlign: "left",
   },
-  switchText: { fontSize: 14, margin: "12px 0 0" },
-  error: { color: "#f38ba8", fontSize: 13 },
+  switchText: { fontSize: 12, margin: "4px 0 0" },
+  error: { color: "#f38ba8", fontSize: 12, margin: 0 },
+  muted: { fontSize: 12, color: muted },
 };
