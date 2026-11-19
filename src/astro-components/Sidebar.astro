@@ -1,0 +1,248 @@
+---
+import FirbaseAuth from "../react-componenets/FirebaseAuth.jsx";
+
+interface Props {
+    heading?: string;
+    nav?: {
+        id: string;
+        label: string;
+        href?: string;
+        children?: { id: string; label: string; href?: string }[];
+    }[];
+}
+
+const {
+    heading = "Study groups",
+    nav = [
+        { label: "Home", href: "/" },
+        {
+            id: "surveys-menu",
+            label: "Surveys",
+            children: [
+                {
+                    id: "surveys",
+                    label: "Sent surveys",
+                    href: "/survey#surveys",
+                },
+                {
+                    id: "create",
+                    label: "Create survey",
+                    href: "/survey#create",
+                },
+            ],
+        },
+    ],
+} = Astro.props;
+
+const currentPath = Astro.url.pathname + Astro.url.hash;
+---
+
+<aside class="sv-sidebar" aria-label="Global sidebar">
+    <div class="sv-sidebar-top">
+        <a class="sv-brand" href="/">
+            Study Buddies
+        </a>
+        <p class="sv-side-label">{heading}</p>
+        <nav aria-label="Main menu">
+            <ul class="sv-nav">
+                {nav.map((item) => {
+                    if (item.children) {
+                        const isOpen =
+                            item.children.some((c) =>
+                                currentPath.includes(c.href || ""),
+                            ) || true;
+                        return (
+                            <li key={item.id}>
+                                <details open={isOpen} class="sv-details">
+                                    <summary class="sv-nav-item">
+                                        <span>{item.label}</span>
+                                        <svg
+                                            class="sv-chevron"
+                                            width="14"
+                                            height="14"
+                                            viewBox="0 0 20 20"
+                                            aria-hidden="true"
+                                        >
+                                            <path
+                                                d="M7 4l6 6-6 6"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                            />
+                                        </svg>
+                                    </summary>
+                                    <ul class="sv-subnav">
+                                        {item.children.map((child) => {
+                                            const isCurrent =
+                                                currentPath === child.href ||
+                                                (child.href ===
+                                                    "/survey#surveys" &&
+                                                    Astro.url.pathname ===
+                                                        "/survey" &&
+                                                    !Astro.url.hash);
+                                            return (
+                                                <li key={child.id}>
+                                                    <a
+                                                        class="sv-nav-item"
+                                                        href={child.href}
+                                                        aria-current={
+                                                            isCurrent
+                                                                ? "page"
+                                                                : undefined
+                                                        }
+                                                    >
+                                                        {child.label}
+                                                    </a>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </details>
+                            </li>
+                        );
+                    }
+                    const isCurrent = currentPath === item.href;
+                    return (
+                        <li key={item.id || item.label}>
+                            <a
+                                class="sv-nav-item"
+                                href={item.href}
+                                aria-current={isCurrent ? "page" : undefined}
+                            >
+                                {item.label}
+                            </a>
+                        </li>
+                    );
+                })}
+            </ul>
+        </nav>
+    </div>
+
+    <div class="sv-side-user">
+        <FirbaseAuth client:load compact />
+    </div>
+</aside>
+
+<style>
+    .sv-sidebar {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 1rem 0.75rem;
+        overflow-y: visible; /* allows profile dropdown to pop out */
+        background: var(--surface, #313244);
+        border-right: 1px solid var(--border, #45475a);
+    }
+
+    .sv-sidebar-top {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .sv-brand {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--text, #cdd6f4);
+        text-decoration: none;
+        padding: 0.25rem 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--border, #45475a);
+        margin-bottom: 0.5rem;
+    }
+
+    .sv-side-label {
+        margin: 0;
+        padding: 0.25rem 0.5rem 0.6rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--subtext, #a6adc8);
+    }
+
+    .sv-nav,
+    .sv-subnav {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .sv-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .sv-subnav {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin: 2px 0 0 0.9rem;
+        padding-left: 0.6rem;
+        border-left: 1px solid var(--border, #45475a);
+    }
+
+    .sv-details {
+        list-style: none;
+    }
+
+    .sv-details summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .sv-nav-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.45rem 0.6rem;
+        border: 0;
+        border-radius: 0.5rem;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .sv-nav-item:hover {
+        background: var(--surface-hover, #45475a);
+    }
+
+    .sv-nav-item[aria-current="page"] {
+        background: color-mix(in srgb, var(--accent, #cba6f7) 22%, transparent);
+        font-weight: 600;
+    }
+
+    .sv-chevron {
+        flex: none;
+        transition: transform 0.15s;
+    }
+
+    details[open] .sv-chevron {
+        transform: rotate(90deg);
+    }
+
+    .sv-side-user {
+        margin-top: auto;
+        padding: 0.75rem 0.5rem 0;
+        border-top: 1px solid var(--border, #45475a);
+        position: relative;
+    }
+
+    @media (max-width: 768px) {
+        .sv-sidebar {
+            position: static;
+            height: auto;
+            border-right: 0;
+            border-bottom: 1px solid var(--border, #45475a);
+        }
+    }
+</style>

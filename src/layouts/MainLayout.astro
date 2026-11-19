@@ -1,29 +1,31 @@
 ---
 import "../styles/global.css";
-const { pageTitle } = Astro.props;
-import Nav from "../astro-components/NavbarSmall.astro";
+import "../styles/survey.css";
+import GlobalSidebar from "../astro-components/Sidebar.astro";
 import Footer from "../astro-components/Footer.astro";
+const { pageTitle, heading } = Astro.props;
 ---
 
-<!--
-USE THIS IN EVERYTHING BUT THE IDNEX
--->
 <!doctype html>
 <html transition:animate="none" lang="en">
-    <meta charset="utf-8" />
-    <meta name="description" content="Astro Description" />
-    <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <head>
+        <meta charset="utf-8" />
+        <meta name="description" content="Astro Description" />
+        <meta name="viewport" content="width=device-width" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <title>{pageTitle}</title>
     </head>
-    <Nav />
     <body>
-        <main>
-            <slot />
-        </main>
+        <div class="sv-app">
+            <GlobalSidebar heading={heading} />
+            <div class="sv-main">
+                <main class="sv-content">
+                    <slot />
+                </main>
+                <Footer />
+            </div>
+        </div>
     </body>
-    <Footer />
 </html>

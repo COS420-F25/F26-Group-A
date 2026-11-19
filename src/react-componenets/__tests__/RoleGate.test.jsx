@@ -2,14 +2,12 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import RoleGate from '../RoleGate.jsx';
 
-// 1. Mock the named export `useUserProfile`
 const mockUseUserProfile = jest.fn();
 
 jest.mock('../useUserProfile', () => ({
   useUserProfile: () => mockUseUserProfile(),
 }));
 
-// 2. Mock the UI styles module
 jest.mock('../ui', () => ({
   styles: {
     page: {},
