@@ -5,28 +5,13 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   updateProfile,
-  signOut,
 } from "firebase/auth";
 import { auth } from "./firebase";
 import { useUserProfile } from "./useUserProfile";
 import { createProfile } from "./accounts";
 
-function friendlyError(err) {
-  switch (err.code) {
-    case "permission-denied":
-      return "The instructor code was not accepted.";
-    case "auth/invalid-credential":
-    case "auth/wrong-password":
-    case "auth/user-not-found":
-      return "Wrong email or password.";
-    case "auth/email-already-in-use":
-      return "An account with that email already exists.";
-    case "auth/weak-password":
-      return "Password must be at least 6 characters.";
-    default:
-      return err.message;
-  }
-}
+import { friendlyError } from "./authErrors.js";
+import { signOutAndGoHome } from "./signOutAndGoHome.js";
 
 function RoleFields({ role, setRole, code, setCode }) {
   return (
@@ -158,7 +143,7 @@ export default function FirbaseAuth({ compact = false }) {
           </button>
         </form>
         {error && <p style={styles.error}>{error}</p>}
-        <button style={styles.link} onClick={() => signOut(auth)}>
+        <button style={styles.link} onClick={signOutAndGoHome}>
           Sign out
         </button>
       </div>
@@ -215,7 +200,7 @@ export default function FirbaseAuth({ compact = false }) {
                 style={{ ...styles.button, width: "100%" }}
                 onClick={() => {
                   setOpen(false);
-                  signOut(auth);
+                  signOutAndGoHome();
                 }}
               >
                 Sign out
@@ -231,7 +216,7 @@ export default function FirbaseAuth({ compact = false }) {
         <p>
           Signed in as {displayName} <span style={styles.badge}>{profile.role}</span>
         </p>
-        <button style={styles.button} onClick={() => signOut(auth)}>
+        <button style={styles.button} onClick={signOutAndGoHome}>
           Sign out
         </button>
       </div>
@@ -293,18 +278,16 @@ export default function FirbaseAuth({ compact = false }) {
     </div>
   );
 
+  // Sidebar corner: send people to the full sign-up / sign-in pages
   if (compact) {
     return (
-      <div style={styles.wrapper} ref={menuRef}>
-        <button
-          type="button"
-          style={styles.smallButton}
-          onClick={() => setOpen(!open)}
-          aria-expanded={open}
-        >
+      <div style={styles.authLinks}>
+        <a href="/signup" style={styles.primaryLink}>
+          Sign up
+        </a>
+        <a href="/signin" style={styles.secondaryLink}>
           Sign in
-        </button>
-        {open && <div style={styles.popover}>{form}</div>}
+        </a>
       </div>
     );
   }
@@ -407,6 +390,28 @@ const styles = {
     border: "none",
     borderRadius: 6,
     fontWeight: 600,
+  },
+  authLinks: { display: "flex", flexDirection: "column", gap: 6, width: "100%" },
+  primaryLink: {
+    padding: "7px 10px",
+    fontSize: "0.8125rem",
+    textAlign: "center",
+    textDecoration: "none",
+    background: accent,
+    color: base,
+    border: "1px solid " + accent,
+    borderRadius: 6,
+    fontWeight: 600,
+  },
+  secondaryLink: {
+    padding: "7px 10px",
+    fontSize: "0.8125rem",
+    textAlign: "center",
+    textDecoration: "none",
+    background: "transparent",
+    color: text,
+    border: "1px solid " + accent,
+    borderRadius: 6,
   },
   smallButton: {
     padding: "6px 10px",
