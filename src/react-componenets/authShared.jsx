@@ -4,7 +4,7 @@ import { signOutAndGoHome } from "./signOutAndGoHome.js";
 import { createProfile } from "./accounts";
 import { useUserProfile } from "./useUserProfile";
 import { friendlyError } from "./authErrors.js";
-import { lightStyles as s } from "./lightUi.js";
+import { authStyles as s, AUTH_CSS } from "./authStyles.js";
 
 // Pieces shared by the sign-in and sign-up screens.
 
@@ -35,13 +35,14 @@ export function useRedirectWhenSignedIn() {
 export function AuthCard({ title, subtitle, children }) {
     return (
         <main style={s.loginPage}>
+            <style>{AUTH_CSS}</style>
             <div style={s.loginCard}>
                 <div style={s.authBrand}>
                     <span style={s.logo} aria-hidden="true" />
                     StudyBuddies
                 </div>
-                <h1 style={{ ...s.h1, fontSize: 30, margin: "0 0 8px" }}>{title}</h1>
-                {subtitle && <p style={{ ...s.lead, margin: 0 }}>{subtitle}</p>}
+                <h1 style={s.title}>{title}</h1>
+                {subtitle && <p style={s.subtitle}>{subtitle}</p>}
                 {children}
             </div>
         </main>
@@ -59,7 +60,7 @@ export function TextField({ id, label, type = "text", value, onChange, autoCompl
                 onChange={(e) => onChange(e.target.value)}
                 autoComplete={autoComplete}
                 required={required}
-                className="sb-input"
+                className="auth-input"
                 style={s.input}
             />
         </div>
@@ -68,7 +69,7 @@ export function TextField({ id, label, type = "text", value, onChange, autoCompl
 
 export function GoogleButton({ onClick }) {
     return (
-        <button type="button" className="sb-google" style={s.googleButton} onClick={onClick}>
+        <button type="button" className="auth-btn" style={s.googleButton} onClick={onClick}>
             Continue with Google
         </button>
     );
@@ -87,12 +88,16 @@ export function OrDivider() {
 export function RolePicker({ role, setRole }) {
     return (
         <fieldset style={s.fieldset}>
-            <legend style={{ ...s.label, marginBottom: 6, padding: 0 }}>I am a</legend>
+            <legend style={s.legend}>I am a</legend>
             <div style={s.segmented}>
                 {ROLE_OPTIONS.map((r) => (
-                    <label key={r.value} className="sb-segment" style={s.segment}>
+                    <label
+                        key={r.value}
+                        className="auth-segment"
+                        style={role === r.value ? { ...s.segment, ...s.segmentOn } : s.segment}
+                    >
                         <input
-                            className="sb-sr-only"
+                            style={s.srOnly}
                             type="radio"
                             name="role"
                             value={r.value}
@@ -141,12 +146,14 @@ export function FinishSetup({ initialRole = "student", initialError = "" }) {
                     <TextField id="finish-code" label="Instructor code" type="password" value={code} onChange={setCode} />
                 )}
                 {error && <p role="alert" style={s.errorText}>{error}</p>}
-                <button type="submit" className="sb-submit" style={s.submitButton} disabled={busy}>
+                <button type="submit" className="auth-btn" style={s.submitButton} disabled={busy}>
                     {busy ? "Saving..." : "Continue"}
                 </button>
             </form>
             <p style={s.altLine}>
-                <button type="button" style={s.linkButton} onClick={signOutAndGoHome}>Sign out</button>
+                <button type="button" className="auth-link" style={s.linkButton} onClick={signOutAndGoHome}>
+                    Sign out
+                </button>
             </p>
         </>
     );

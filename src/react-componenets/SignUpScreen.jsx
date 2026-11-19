@@ -8,7 +8,7 @@ import {
 import { auth } from "./firebase";
 import { createProfile } from "./accounts";
 import { friendlyError } from "./authErrors.js";
-import { lightStyles as s } from "./lightUi.js";
+import { authStyles as s } from "./authStyles.js";
 import {
     AuthCard,
     FinishSetup,
@@ -25,8 +25,6 @@ export const ROLES = [
     { value: "student", title: "Student", text: "Take surveys and see your group" },
     { value: "instructor", title: "Instructor", text: "Set up and manage reflection groups" }
 ];
-
-const roleCard = { cursor: "pointer", font: "inherit", textAlign: "center" };
 
 export default function SignUpScreen() {
     const { user, profile, loading } = useRedirectWhenSignedIn();
@@ -88,8 +86,8 @@ export default function SignUpScreen() {
                         <button
                             key={r.value}
                             type="button"
-                            className="sb-choice"
-                            style={{ ...s.roleButton, ...roleCard }}
+                            className="auth-choice"
+                            style={s.roleButton}
                             onClick={() => setRole(r.value)}
                         >
                             <span style={s.roleTitle}>{r.title}</span>
@@ -99,7 +97,7 @@ export default function SignUpScreen() {
                 </div>
                 <p style={s.altLine}>
                     Already have an account?{" "}
-                    <a href="/signin" style={s.textLink}>Sign in</a>
+                    <a href="/signin" className="auth-link" style={s.textLink}>Sign in</a>
                 </p>
             </AuthCard>
         );
@@ -119,17 +117,22 @@ export default function SignUpScreen() {
                     <TextField id="signup-code" label="Instructor code" type="password" value={code} onChange={setCode} />
                 )}
                 {error && <p role="alert" style={s.errorText}>{error}</p>}
-                <button type="submit" className="sb-submit" style={s.submitButton} disabled={busy}>
+                <button type="submit" className="auth-btn" style={s.submitButton} disabled={busy}>
                     {busy ? "Creating account..." : "Create account"}
                 </button>
             </form>
             <p style={s.altLine}>
-                <button type="button" style={s.linkButton} onClick={() => { setRole(null); setError(""); }}>
+                <button
+                    type="button"
+                    className="auth-link"
+                    style={s.linkButton}
+                    onClick={() => { setRole(null); setError(""); }}
+                >
                     Change role
                 </button>
                 {" · "}
                 Already have an account?{" "}
-                <a href="/signin" style={s.textLink}>Sign in</a>
+                <a href="/signin" className="auth-link" style={s.textLink}>Sign in</a>
             </p>
         </AuthCard>
     );

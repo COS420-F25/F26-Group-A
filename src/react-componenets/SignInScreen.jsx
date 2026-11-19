@@ -2,7 +2,7 @@ import { useState } from "react";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "./firebase";
 import { friendlyError } from "./authErrors.js";
-import { lightStyles as s } from "./lightUi.js";
+import { authStyles as s } from "/styles/authStyles.js";
 import {
     AuthCard,
     FinishSetup,
@@ -65,13 +65,13 @@ export default function SignInScreen() {
                 <TextField id="signin-email" label="Email" type="email" value={email} onChange={setEmail} autoComplete="email" />
                 <TextField id="signin-password" label="Password" type="password" value={password} onChange={setPassword} autoComplete="current-password" />
                 {error && <p role="alert" style={s.errorText}>{error}</p>}
-                <button type="submit" className="sb-submit" style={s.submitButton} disabled={busy}>
+                <button type="submit" className="auth-btn" style={s.submitButton} disabled={busy}>
                     {busy ? "Signing in..." : "Sign in"}
                 </button>
             </form>
             <p style={s.altLine}>
                 New here?{" "}
-                <a href="/signup" style={s.textLink}>Sign up</a>
+                <a href="/signup" className="auth-link" style={s.textLink}>Sign up</a>
             </p>
         </AuthCard>
     );

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { signOutAndGoHome } from "./signOutAndGoHome.js";
-import { light, lightStyles as s } from "./lightUi.js";
+import { instructorStyles as s, INSTRUCTOR_CSS } from "./instructorStyles.js";
 
 // Instructor home
 // using placeholder data/content for now (mockup, no auth)
@@ -43,23 +43,10 @@ export const FAQS = [
     }
 ];
 
-// Layout containers get their grid/flex/padding from the class names in
-// AppShellLayout.astro (so media queries can override them). Inline styles
-// would win over those rules, so drop the layout keys here.
-const LAYOUT_KEYS = [
-    "display", "flexDirection", "gridTemplateColumns", "gap", "padding",
-    "width", "flex", "flexShrink", "marginTop", "alignItems", "position", "height"
-];
-function skin(style) {
-    const out = { ...style };
-    LAYOUT_KEYS.forEach((k) => delete out[k]);
-    return out;
-}
-
 // Rendered link that goes nowhere yet: no href, aria-disabled.
-function DisabledLink({ style, children }) {
+function DisabledLink({ className, style, children }) {
     return (
-        <a aria-disabled="true" style={{ ...style, ...s.disabled }}>
+        <a aria-disabled="true" className={className} style={{ ...style, ...s.disabled }}>
             {children}
         </a>
     );
@@ -72,29 +59,29 @@ function handleSignOut(e) {
 
 function Sidebar() {
     return (
-        <aside className="sb-sidebar" style={skin(s.sidebar)}>
+        <aside className="ih-sidebar" style={s.sidebar}>
             <div style={s.brand}>
                 <span style={s.logo} aria-hidden="true" />
                 StudyBuddies
             </div>
-            <div className="sb-course" style={s.courseLabel}>
+            <div style={s.courseLabel}>
                 {COURSE.label.toUpperCase()}
             </div>
 
-            <nav className="sb-nav" aria-label="Course">
-                <a href="/instructor" aria-current="page" style={{ ...s.navItem, ...s.navItemActive }}>
+            <nav aria-label="Course" style={s.nav}>
+                <a href="/instructor" aria-current="page" className="ih-nav" style={s.navItemActive}>
                     Reflection groups
                 </a>
-                <DisabledLink style={s.navItem}># general</DisabledLink>
-                <DisabledLink style={s.navItem}># announcements</DisabledLink>
+                <DisabledLink className="ih-nav" style={s.navItem}># general</DisabledLink>
+                <DisabledLink className="ih-nav" style={s.navItem}># announcements</DisabledLink>
             </nav>
 
-            <div className="sb-sidebar-bottom" style={skin(s.sidebarBottom)}>
-                <DisabledLink style={s.navItem}>Settings</DisabledLink>
-                <a href="/" onClick={handleSignOut} style={s.navItem}>Sign out</a>
+            <div style={s.sidebarBottom}>
+                <DisabledLink className="ih-nav" style={s.navItem}>Settings</DisabledLink>
+                <a href="/" onClick={handleSignOut} className="ih-nav" style={s.navItem}>Sign out</a>
                 <div style={s.userChip}>
                     <span style={s.avatar} aria-hidden="true">{USER.initials}</span>
-                    <div className="sb-user-text">
+                    <div style={s.userText}>
                         <div style={s.userName}>{USER.name}</div>
                         <div style={s.userRole}>{USER.role}</div>
                     </div>
@@ -121,7 +108,7 @@ function Steps() {
     return (
         <section style={s.section} aria-labelledby="how-setup-works">
             <h2 id="how-setup-works" style={s.sectionTitle}>How setup works</h2>
-            <ol className="sb-steps" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            <ol className="ih-steps" style={s.steps}>
                 {STEPS.map((step, i) => (
                     <li key={step.title} style={s.stepCard}>
                         <p style={s.stepLabel}>STEP {i + 1} · {step.time}</p>
@@ -137,10 +124,10 @@ function Steps() {
 function FaqItem({ question, answer }) {
     const [open, setOpen] = useState(false);
     return (
-        <details style={s.faqItem} onToggle={(e) => setOpen(e.currentTarget.open)}>
+        <details className="ih-faq" style={s.faqItem} onToggle={(e) => setOpen(e.currentTarget.open)}>
             <summary style={s.faqSummary}>
                 <span>{question}</span>
-                <span aria-hidden="true" style={{ color: light.subtext, fontSize: 18 }}>
+                <span aria-hidden="true" style={s.faqToggle}>
                     {open ? "-" : "+"}
                 </span>
             </summary>
@@ -153,7 +140,7 @@ function Faq() {
     return (
         <section style={s.section} aria-labelledby="common-questions">
             <h2 id="common-questions" style={s.sectionTitle}>Common questions</h2>
-            <div className="sb-faq">
+            <div>
                 {FAQS.map((f) => (
                     <FaqItem key={f.question} {...f} />
                 ))}
@@ -164,11 +151,12 @@ function Faq() {
 
 export default function InstructorHome() {
     return (
-        <div className="sb-shell" style={skin(s.shell)}>
+        <div className="ih-shell" style={s.shell}>
+            <style>{INSTRUCTOR_CSS}</style>
             <Sidebar />
-            <main className="sb-main" style={skin(s.main)}>
+            <main className="ih-main" style={s.main}>
                 <div style={s.content}>
-                    <div className="sb-hero" style={skin(s.hero)}>
+                    <div className="ih-hero" style={s.hero}>
                         <div>
                             <span style={s.pill}>Reflection groups · {COURSE.code}</span>
                             <h1 style={s.h1}>Give every student a small group they can be honest with.</h1>
@@ -178,11 +166,13 @@ export default function InstructorHome() {
                                 them, adjust anything, and publish.
                             </p>
                             <div style={s.buttonColumn}>
-                                <a href="/survey" className="sb-btn-primary" style={s.primaryButton}>
+                                <a href="/survey" className="ih-btn" style={s.primaryButton}>
                                     Set up reflection groups
                                     <span style={s.buttonBadge}>~10 min</span>
                                 </a>
-                                <DisabledLink style={s.secondaryButton}>Upload groups I already have</DisabledLink>
+                                <DisabledLink className="ih-btn" style={s.secondaryButton}>
+                                    Upload groups I already have
+                                </DisabledLink>
                                 <p style={s.finePrint}>
                                     Students see nothing until you open the survey, and no groups until
                                     you publish.
