@@ -3,6 +3,8 @@ import AppShell, { Page } from "./AppShell";
 import SurveyBuilder from "./SurveyBuilder";
 import SurveyDetail from "../content/SurveyDetail";
 import SurveyFlow from "./SurveyFlow";
+import ReviewGroups from "../content/ReviewGroups";
+import { firebaseGroupService } from "../utils/groupService";
 import { watchMySurveys } from "../utils/surveyService";
 import { useHashRoute } from "../useHashRoute";
 import { formatRange } from "../utils/slots";
@@ -54,7 +56,9 @@ export default function InstructorSurveys({ user, profile }) {
       />
     );
   } else if (section === "survey" && surveyId) {
-    if (survey && subpage === "preview") {
+    if (survey && subpage === "groups") {
+      page = <ReviewGroups key={survey.id} user={user} surveyId={survey.id} service={firebaseGroupService} />;
+    } else if (survey && subpage === "preview") {
       page = (
         <SurveyFlow
           survey={survey}
@@ -90,6 +94,7 @@ export default function InstructorSurveys({ user, profile }) {
         </Page>
       );
     }
+
   } else {
     page = (
       <Page>
