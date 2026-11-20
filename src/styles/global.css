@@ -1386,3 +1386,28 @@ textarea.sv-input {
     padding: 1.5rem;
   }
 }
+
+/* =====================================================================
+   15. PUBLISH GROUPS DIALOG
+   ===================================================================== */
+
+.publish-group-dialog {
+  inset: 0;
+  box-sizing: border-box;
+  width: min(790px, calc(100% - 2rem));
+  min-height: min(300px, calc(100dvh - 2rem));
+  max-width: none;
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.publish-group-dialog::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
