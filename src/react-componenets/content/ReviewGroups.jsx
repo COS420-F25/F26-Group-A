@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
   blockConflictText,
+  getPublishWarnings,
   HOUR_REQUEST_MESSAGE,
   MAX_GROUP_SIZE,
   MIN_SHARED_TIMES,
@@ -15,6 +16,7 @@ import {
   studentsFromSurvey,
 } from "../utils/groupRounds";
 import { initialState, roundReducer } from "../utils/groupRoundReducer";
+import PublishGroupDialog from "../PublishGroupDialog";
 import Breadcrumb from "../structure/Breadcrumb";
 import { Page } from "../structure/AppShell";
 
@@ -29,6 +31,7 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [menuFor, setMenuFor] = useState(null); // uid of the student whose Move menu is open
   const needsSave = useRef(false);
 
@@ -112,6 +115,8 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
   }
 
   const published = round.status === "published";
+  const groupsToPublish = round.groups.filter((group) => group.memberIds.length > 0);
+  const publishChecks = showPublishDialog ? getPublishWarnings(groupsToPublish, byId) : null;
 
   function change(action) {
     needsSave.current = true;
@@ -146,6 +151,7 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
     try {
       await publishRound(surveyId, user, round);
       dispatch({ type: "published" });
+      setShowPublishDialog(false);
       const left = round.unplaced.length;
       setNotice(
         "Groups published. Each student can now see their own group." +
@@ -191,14 +197,18 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
         </div>
         <button
           className="sv-btn sv-btn-primary"
-          onClick={handlePublish}
-          disabled={published || publishing || round.groups.length === 0}
+          onClick={() => {
+            setError("");
+            setMenuFor(null);
+            setShowPublishDialog(true);
+          }}
+          disabled={published || saving || publishing || groupsToPublish.length === 0}
         >
           {published ? "Published" : publishing ? "Publishing..." : "Continue to publish"}
         </button>
       </div>
 
-      {error && (
+      {error && !showPublishDialog && (
         <p className="sv-error" role="alert">
           {error}
         </p>
@@ -235,6 +245,24 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
           />
         )}
       </div>
+      {publishChecks && (
+        <PublishGroupDialog
+          review={{
+            roundNumber: round.roundNumber,
+            studentCount: summary.placed,
+            groupCount: groupsToPublish.length,
+            instructorName: user.displayName ?? "",
+            courseName: "",
+            warnings: publishChecks.warnings,
+            preview: null,
+          }}
+          blockers={publishChecks.blockers}
+          onClose={() => setShowPublishDialog(false)}
+          onConfirm={handlePublish}
+          publishing={publishing}
+          error={error}
+        />
+      )}
     </Page>
   );
 }

@@ -2,6 +2,7 @@ import {
   blockConflict,
   bySchedule,
   byScheduleAndInterests,
+  getPublishWarnings,
   matchGroups,
   moveStudent,
   nextGroup,
@@ -45,6 +46,34 @@ describe('sharedTimes', () => {
   test('slotLabel turns a slot into readable text', () => {
     expect(slotLabel('Mon-18')).toBe('Mon 6 PM');
   });
+});
+
+test('publish warnings use the existing timing and size rules and skip empty and one-member groups', () => {
+  const regular = ['Mon-18', 'Wed-18'];
+  const available = (uid) => student(uid, regular, { ifNeeded: ['Thu-19'] });
+  const students = [
+    available('a'), available('b'),
+    student('short', ['Mon-18']), student('later', ['Sun-12']),
+    student('solo', ['Mon-18']),
+    student('fallback', [], { ifNeeded: ['Mon-18', 'Thu-19'] }),
+    ...['c', 'd', 'e', 'f', 'g', 'h'].map(available),
+  ];
+  const groups = [
+    { id: 'regular', name: 'Regular', memberIds: ['a', 'b'] },
+    { id: 'short', name: 'Short', memberIds: ['a', 'short'] },
+    { id: 'none', name: 'None', memberIds: ['b', 'later'] },
+    { id: 'fallback', name: 'Fallback', memberIds: ['a', 'fallback'] },
+    { id: 'large', name: 'Large', memberIds: ['c', 'd', 'e', 'f', 'g', 'h'] },
+    { id: 'solo', name: 'Solo', memberIds: ['solo'] },
+    { id: 'empty', name: 'Empty', memberIds: [] },
+  ];
+  const byId = Object.fromEntries(students.map((person) => [person.uid, person]));
+
+  const { warnings, blockers } = getPublishWarnings(groups, byId);
+  expect(warnings.map(({ id }) => id)).toEqual([
+    'short-below-rule', 'none-no-shared-time', 'fallback-if-needed', 'large-over-size',
+  ]);
+  expect(blockers).toEqual([]);
 });
 
 describe('matchGroups', () => {

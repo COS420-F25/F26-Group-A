@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
-function PublishDialogHeader({ roundNumber, studentCount, groupCount, instructorName, courseName, onClose }) {
+function PublishDialogHeader({ roundNumber, studentCount, groupCount, instructorName, courseName, onClose, disabled }) {
     const students = studentCount === 1 ? "student" : "students";
     const groups = groupCount === 1 ? "group" : "groups";
     const summary = [
@@ -15,7 +15,13 @@ function PublishDialogHeader({ roundNumber, studentCount, groupCount, instructor
                 <h2 className="sv-title">Publish Round {roundNumber} {groups}?</h2>
                 <p className="sv-sub">{summary}</p>
             </div>
-            <button type="button" className="sv-btn sv-btn-sm" aria-label="Close publish dialog" onClick={onClose}>
+            <button
+                type="button"
+                className="sv-btn sv-btn-sm"
+                aria-label="Close publish dialog"
+                onClick={onClose}
+                disabled={disabled}
+            >
                 ×
             </button>
         </header>
@@ -46,8 +52,81 @@ function PublishPrivacyNotice() {
     );
 }
 
-export default function PublishGroupDialog({ review, children, onClose }) {
+function PublishWarningRow({ warning, accepted, onWarningChange, disabled }) {
+    return (
+        <label className="publish-warning-row" data-blocking="false">
+            <input
+                type="checkbox"
+                checked={accepted}
+                onChange={(event) => onWarningChange(warning.id, event.target.checked)}
+                disabled={disabled}
+            />
+            <span><strong>{warning.title}</strong> {warning.message}</span>
+        </label>
+    );
+}
+
+function PublishWarningChecklist({ warnings, acceptedWarningIds, onWarningChange, blockers, disabled }) {
+    const headingId = useId();
+    const acceptedCount = warnings.filter((warning) => acceptedWarningIds.has(warning.id)).length;
+    const allAccepted = acceptedCount === warnings.length;
+
+    return (
+        <section className="publish-warning-checklist" aria-labelledby={headingId}>
+            <div className="sv-card-head publish-warning-heading">
+                <h3 className="sv-h2" id={headingId}>Check before you publish</h3>
+                {warnings.length > 0 && (
+                    <span className="publish-warning-count" data-complete={allAccepted} role="status">
+                        {allAccepted && <span aria-hidden="true">✓ </span>}
+                        {acceptedCount} of {warnings.length} accepted
+                    </span>
+                )}
+            </div>
+            <div className="publish-warning-rows">
+                {blockers.map((blocker) => (
+                    <div key={blocker.id} className="publish-warning-row" data-blocking="true">
+                        <span><strong>{blocker.title}</strong> {blocker.message}</span>
+                    </div>
+                ))}
+                {warnings.map((warning) => (
+                    <PublishWarningRow
+                        key={warning.id}
+                        warning={warning}
+                        accepted={acceptedWarningIds.has(warning.id)}
+                        onWarningChange={onWarningChange}
+                        disabled={disabled}
+                    />
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function PublishDialogFooter({ groupCount, remainingWarnings, canPublish, onClose, onConfirm, publishing, error }) {
+    return (
+        <footer className="publish-dialog-footer">
+            {error && <p className="sv-error" role="alert">{error}</p>}
+            <div className="publish-dialog-actions">
+                <button type="button" className="sv-btn" onClick={onClose} disabled={publishing}>Back to review</button>
+                <button
+                    type="button"
+                    className="sv-btn sv-btn-primary"
+                    onClick={() => onConfirm()}
+                    disabled={!canPublish || remainingWarnings > 0}
+                >
+                    {publishing ? "Publishing…" : `Publish ${groupCount} ${groupCount === 1 ? "group" : "groups"}`}
+                </button>
+            </div>
+        </footer>
+    );
+}
+
+export default function PublishGroupDialog({ review, children, onClose, onConfirm, blockers = [], publishing = false, error }) {
     const dialogRef = useRef(null);
+    const [acceptedWarningIds, setAcceptedWarningIds] = useState(() => new Set());
+    const warnings = review?.warnings ?? [];
+    const remainingWarnings = warnings.filter((warning) => !acceptedWarningIds.has(warning.id)).length;
+    const canPublish = blockers.length === 0 && !publishing;
 
     useEffect(() => {
         const dialog = dialogRef.current;
@@ -57,12 +136,28 @@ export default function PublishGroupDialog({ review, children, onClose }) {
         }
     }, []);
 
+    function dismiss() {
+        dialogRef.current.close();
+    }
+
+    function onWarningChange(id, accepted) {
+        setAcceptedWarningIds((previous) => {
+            const next = new Set(previous);
+            if (accepted) next.add(id);
+            else next.delete(id);
+            return next;
+        });
+    }
+
     return (
         <dialog
             ref={dialogRef}
             className="publish-group-dialog"
             aria-label="Publish groups"
             onClose={onClose}
+            onCancel={(event) => {
+                if (publishing) event.preventDefault();
+            }}
         >
             {review && (
                 <>
@@ -72,12 +167,33 @@ export default function PublishGroupDialog({ review, children, onClose }) {
                         groupCount={review.groupCount}
                         instructorName={review.instructorName}
                         courseName={review.courseName}
-                        onClose={() => dialogRef.current.close()}
+                        onClose={dismiss}
+                        disabled={publishing}
                     />
                     <PublishPrivacyNotice />
+                    {(warnings.length > 0 || blockers.length > 0) && (
+                        <PublishWarningChecklist
+                            warnings={warnings}
+                            acceptedWarningIds={acceptedWarningIds}
+                            onWarningChange={onWarningChange}
+                            blockers={blockers}
+                            disabled={publishing}
+                        />
+                    )}
                 </>
             )}
             {children}
+            {review && onConfirm && (
+                <PublishDialogFooter
+                    groupCount={review.groupCount}
+                    remainingWarnings={remainingWarnings}
+                    canPublish={canPublish}
+                    onClose={dismiss}
+                    onConfirm={onConfirm}
+                    publishing={publishing}
+                    error={error}
+                />
+            )}
         </dialog>
     );
 }
