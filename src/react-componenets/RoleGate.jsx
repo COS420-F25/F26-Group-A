@@ -1,10 +1,9 @@
 import { useUserProfile } from "./useUserProfile";
-import { styles } from "./ui";
 
 function Notice({ children }) {
   return (
-    <div style={styles.page}>
-      <p style={styles.muted}>{children}</p>
+    <div className="sv-page">
+      <p className="sv-hint">{children}</p>
     </div>
   );
 }

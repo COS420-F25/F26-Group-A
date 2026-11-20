@@ -29,6 +29,11 @@ service cloud.firestore {
       return hasProfile() && roleOfCaller() == 'instructor';
     }
 
+    function isSurveyOwner(surveyId) {
+      return isInstructor()
+        && get(/databases/$(database)/documents/surveys/$(surveyId)).data.createdBy == request.auth.uid;
+    }
+
     function isStudent() {
       return hasProfile() && roleOfCaller() == 'student';
     }
@@ -136,6 +141,23 @@ service cloud.firestore {
           && request.resource.data.answers is map;
 
         allow delete: if false;
+      }
+
+      // Draft groups show block list conflicts, so only the instructor who sent the survey can see them.
+      match /rounds/{roundId} {
+        allow read, write: if isSurveyOwner(surveyId);
+      }
+
+      match /groups/{groupId} {
+        allow read: if isSurveyOwner(surveyId)
+          || (signedIn() && request.auth.uid in resource.data.memberIds);
+        allow write: if isSurveyOwner(surveyId)
+          && request.resource.data.memberIds is list;
+      }
+
+      match /hourRequests/{studentUid} {
+        allow read: if isSurveyOwner(surveyId) || (signedIn() && request.auth.uid == studentUid);
+        allow write: if isSurveyOwner(surveyId);
       }
     }
   }
