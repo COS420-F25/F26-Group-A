@@ -114,6 +114,11 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
       <button type="button" className="sv-btn" onClick={handleDownload} disabled={!responses}>
         Download CSV
       </button>
+
+      <a className="sv-btn" href={`#survey/${survey.id}/groups`}>
+        Match groups
+      </a>
+
       <button type="button" className="sv-btn sv-btn-primary" onClick={toggleStatus}>
         {isOpen ? "Close survey" : "Reopen survey"}
       </button>
