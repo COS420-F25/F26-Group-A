@@ -2,6 +2,7 @@
 COS 420 Group Project
 
 ## Team Ant
+Motto: We ball regardless
 
 **Roles**
 
