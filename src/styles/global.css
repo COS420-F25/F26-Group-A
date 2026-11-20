@@ -1411,3 +1411,15 @@ textarea.sv-input {
 .publish-group-dialog::backdrop {
   background: rgb(0 0 0 / 45%);
 }
+
+.publish-dialog-header {
+  padding: 1.25rem 1.5rem 0;
+}
+
+.publish-privacy-notice {
+  align-items: flex-start;
+  margin: 0 1.5rem 1rem;
+  background: var(--background);
+  border-color: var(--border);
+  color: var(--subtext);
+}
