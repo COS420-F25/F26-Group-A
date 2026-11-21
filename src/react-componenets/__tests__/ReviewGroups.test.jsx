@@ -23,7 +23,11 @@ const roster = ['jane', 'john', 'mary', 'max', 'tom', 'joan'].map((uid) => ({
 const answer = (uid, available, extra = {}) => ({
   uid,
   name: uid[0].toUpperCase() + uid.slice(1),
-  answers: { interests: extra.tags ?? [], availability: { available, ifNeeded: [] }, blocklist: extra.blockList ?? [] },
+  answers: {
+    interests: extra.tags ?? [],
+    availability: { available, ifNeeded: extra.ifNeeded ?? [] },
+    blocklist: extra.blockList ?? [],
+  },
 });
 const responses = [
   answer('jane', ['Tue-17', 'Thu-17', 'Mon-18'], { tags: ['Math'], blockList: ['john'] }),
@@ -50,6 +54,15 @@ const draft = {
 };
 
 let service;
+beforeAll(() => {
+  // jsdom does not implement the native modal methods.
+  HTMLDialogElement.prototype.showModal ??= function () { this.open = true; };
+  HTMLDialogElement.prototype.close ??= function () {
+    this.open = false;
+    this.dispatchEvent(new Event('close'));
+  };
+});
+
 beforeEach(() => {
   service = {
     getSurvey: jest.fn().mockResolvedValue(survey),
@@ -138,16 +151,82 @@ test('asking for hours sends the request and shows it on the card', async () => 
   expect(await screen.findByText(/Asked for hours/)).toBeInTheDocument();
 });
 
-test('Continue to publish publishes the round', async () => {
+test('a round without warnings publishes after confirmation', async () => {
   const u = userEvent.setup();
   await renderPage();
 
   await u.click(screen.getByRole('button', { name: 'Continue to publish' }));
+  const dialog = within(screen.getByRole('dialog', { name: 'Publish groups' }));
+  expect(service.publishRound).not.toHaveBeenCalled();
+  expect(dialog.queryByRole('checkbox')).not.toBeInTheDocument();
+  await u.click(dialog.getByRole('button', { name: 'Publish 3 groups' }));
   await waitFor(() =>
     expect(service.publishRound).toHaveBeenCalledWith('s1', user, expect.objectContaining({ roundNumber: 1 }))
   );
   expect(await screen.findByText(/Groups published/)).toBeInTheDocument();
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Move John' })).not.toBeInTheDocument();
+});
+
+test('each scheduling warning needs its own acknowledgment and closing resets the checklist', async () => {
+  const u = userEvent.setup();
+  service.getLatestRound.mockResolvedValue({
+    ...draft,
+    groups: [
+      draft.groups[0],
+      { ...draft.groups[1], memberIds: ['john', 'mary'] },
+      { ...draft.groups[2], memberIds: ['joan', 'tom'] },
+    ],
+    unplaced: [],
+  });
+  service.getResponses.mockResolvedValue(responses.map((response) =>
+    response.uid === 'john' ? answer('john', [], { ifNeeded: ['Tue-17', 'Thu-17'] }) : response
+  ));
+  await renderPage();
+
+  const open = screen.getByRole('button', { name: 'Continue to publish' });
+  await u.click(open);
+  const dialog = within(screen.getByRole('dialog'));
+  const [ifNeeded, noSharedTime] = dialog.getAllByRole('checkbox');
+  const publish = dialog.getByRole('button', { name: 'Publish 3 groups' });
+  expect(ifNeeded).toHaveAccessibleName(/Group 2 relies on .*if needed.* Tue 5 PM, Thu 5 PM/);
+  expect(noSharedTime).toHaveAccessibleName(/Group 3 has no fixed shared time/);
+  expect(publish).toBeDisabled();
+  await u.click(ifNeeded);
+  expect(dialog.getByRole('status')).toHaveTextContent('1 of 2 accepted');
+  expect(publish).toBeDisabled();
+  await u.click(noSharedTime);
+  expect(dialog.getByRole('status')).toHaveTextContent('2 of 2 accepted');
+  expect(publish).toBeEnabled();
+  await u.click(noSharedTime);
+  expect(publish).toBeDisabled();
+  await u.click(dialog.getByRole('button', { name: 'Back to review' }));
+
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(service.publishRound).not.toHaveBeenCalled();
+  await u.click(open);
+  const reopened = within(screen.getByRole('dialog'));
+  expect(reopened.getByRole('status')).toHaveTextContent('0 of 2 accepted');
+  for (const warning of reopened.getAllByRole('checkbox')) await u.click(warning);
+  await u.click(reopened.getByRole('button', { name: 'Publish 3 groups' }));
+  expect(await screen.findByText(/Groups published/)).toBeInTheDocument();
+  expect(service.publishRound).toHaveBeenCalledTimes(1);
+});
+
+test('a saved group with a block list conflict cannot be published', async () => {
+  const u = userEvent.setup();
+  service.getLatestRound.mockResolvedValue({
+    ...draft,
+    groups: [{ ...draft.groups[0], memberIds: ['jane', 'john'] }],
+  });
+  await renderPage();
+
+  await u.click(screen.getByRole('button', { name: 'Continue to publish' }));
+  const dialog = within(screen.getByRole('dialog'));
+  expect(dialog.getByText('Group 1 has a block list conflict.')).toBeInTheDocument();
+  expect(dialog.queryByRole('checkbox')).not.toBeInTheDocument();
+  expect(dialog.getByRole('button', { name: 'Publish 1 group' })).toBeDisabled();
+  expect(service.publishRound).not.toHaveBeenCalled();
 });
 
 test('runs matching from the saved survey answers when there is no draft yet', async () => {

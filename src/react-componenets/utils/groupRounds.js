@@ -42,6 +42,58 @@ export function blockConflictText(student, other) {
   return `${student.name} has ${other.name} on their block list.`;
 }
 
+export function getPublishWarnings(groups, studentsById) {
+  const warnings = [];
+  const blockers = [];
+
+  for (const group of groups) {
+    const members = group.memberIds.map((uid) => studentsById[uid]).filter(Boolean);
+    if (members.length < 2) continue;
+    const shared = sharedTimes(members);
+    const ifNeeded = shared.filter((time) => time.ifNeeded);
+
+    if (members.some((student) => blockConflict(student, members))) {
+      blockers.push({
+        id: `${group.id}-block-list`,
+        title: `${group.name} has a block list conflict.`,
+        message: "Return to review and move one of the affected students before publishing.",
+      });
+    }
+
+    if (shared.length === 0) {
+      warnings.push({
+        id: `${group.id}-no-shared-time`,
+        title: `${group.name} has no fixed shared time.`,
+        message: "Its members will need to agree on a meeting time.",
+      });
+    } else if (ifNeeded.length > 0 && shared.length - ifNeeded.length < MIN_SHARED_TIMES) {
+      const times = ifNeeded.map(({ slot }) => slotLabel(slot)).join(", ");
+      const belowRule = shared.length < MIN_SHARED_TIMES ? ` This is below the ${MIN_SHARED_TIMES}-time rule.` : "";
+      warnings.push({
+        id: `${group.id}-if-needed`,
+        title: `${group.name} relies on “if needed” time.`,
+        message: `At least one member marked ${times} as “if needed.”${belowRule}`,
+      });
+    } else if (shared.length < MIN_SHARED_TIMES) {
+      warnings.push({
+        id: `${group.id}-below-rule`,
+        title: `${group.name} has only one shared time.`,
+        message: `Everyone can meet ${slotLabel(shared[0].slot)}. This is below the ${MIN_SHARED_TIMES}-time rule.`,
+      });
+    }
+
+    if (group.memberIds.length > MAX_GROUP_SIZE) {
+      warnings.push({
+        id: `${group.id}-over-size`,
+        title: `${group.name} is over the ${MAX_GROUP_SIZE}-person limit.`,
+        message: `It has ${group.memberIds.length} members.`,
+      });
+    }
+  }
+
+  return { warnings, blockers };
+}
+
 // A strategy scores how well a student fits a group: (student, members, shared) => number
 
 export const bySchedule = (student, members, shared) => shared.length;
