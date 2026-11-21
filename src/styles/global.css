@@ -1487,6 +1487,14 @@ textarea.sv-input {
   accent-color: var(--accent);
 }
 
+/*
+ * Publish effects layout — pseudocode
+ * Give the section the same side margins as the warning checklist.
+ * Lay out the list in two equal columns on wide screens and one on narrow screens.
+ * Align each icon to the first line of its description and allow the description to wrap.
+ * Use the existing --accent for icons and --text or --subtext for descriptions.
+ */
+
 .publish-dialog-footer {
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border);
