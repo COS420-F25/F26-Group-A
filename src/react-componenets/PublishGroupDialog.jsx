@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef, useState } from "react";
-export { warningIcon, bellIcon, padlockIcon, swapIcon }
 
 function PublishDialogHeader({ roundNumber, studentCount, groupCount, instructorName, courseName, onClose, disabled }) {
     const students = studentCount === 1 ? "student" : "students";
+
     const groups = groupCount === 1 ? "group" : "groups";
     const summary = [
         `${studentCount} ${students} in ${groupCount} ${groups}`,
@@ -103,84 +103,129 @@ function PublishWarningChecklist({ warnings, acceptedWarningIds, onWarningChange
     );
 }
 
+function StudentNoteInput({ note, maxLength, onNoteChange, disabled }) {
+    const id = useId();
+    const wordCount = note.trim().split(/\s+/).filter(Boolean).length;
+
+    return (
+        <section className="sv-field publish-student-note">
+            <h3 className="sv-h2">
+                <label htmlFor={id}>Note to Students (Optional)</label>
+            </h3>
+
+            <textarea
+                id={id}
+                className="sv-input"
+                rows={3}
+                value={note}
+                maxLength={maxLength}
+                onChange={(event) => onNoteChange(event.target.value)}
+                disabled={disabled}
+                aria-describedby={`${id}-help ${id}-count`}
+            />
+
+            <div className="sv-row sv-muted sv-small">
+                <p id={`${id}-count`}>
+                    {wordCount} {wordCount === 1 ? "word" : "words"} ·{" "}
+                    {note.length} / {maxLength} characters
+                </p>
+                <p id={`${id}-help`} className="publish-student-note-help">
+                    This will be the first message in each group channel
+                </p>
+            </div>
+        </section>
+    );
+}
+
 const padlockIcon = (
-        <svg 
-            xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" 
-            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            strokelinejoin="round" class="lucide lucide-lock preview-icon" aria-hidden="true">
-            
-            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-    
+    <svg
+        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+        strokeLinejoin="round" className="lucide lucide-lock" aria-hidden="true"
+    >
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
 );
 
 const bellIcon = (
-        <svg 
-            xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" 
-            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
-            class="lucide lucide-bell preview-icon">
-            <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
-            <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
-        </svg>
+    <svg
+        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+        strokeLinejoin="round" className="lucide lucide-bell" aria-hidden="true"
+    >
+        <path d="M10.268 21a2 2 0 0 0 3.464 0" />
+        <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />
+    </svg>
 );
 
 const swapIcon = (
-        <svg 
-            xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" 
-            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
-            class="lucide lucide-arrow-left-right preview-icon">
-            <path d="M8 3 4 7l4 4"/>
-            <path d="M4 7h16"/>
-            <path d="m16 21 4-4-4-4"/>
-            <path d="M20 17H4"/>
-        </svg>
+    <svg
+        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+        strokeLinejoin="round" className="lucide lucide-arrow-left-right" aria-hidden="true"
+    >
+        <path d="M8 3 4 7l4 4" />
+        <path d="M4 7h16" />
+        <path d="m16 21 4-4-4-4" />
+        <path d="M20 17H4" />
+    </svg>
 );
 
-
 const warningIcon = (
-        <svg 
-            xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" 
-            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
-            class="lucide lucide-triangle-exclamation-point preview-icon">
-            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>
-            <path d="M12 9v4"/>
-            <path d="M12 17h.01"/>
-        </svg>
+    <svg
+        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+        strokeLinejoin="round" className="lucide lucide-triangle-exclamation-point" aria-hidden="true"
+    >
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+        <path d="M12 9v4" />
+        <path d="M12 17h.01" />
+    </svg>
 );
 
 function PublishEffectItem({ icon, text }) {
     return (
-        <p className="sv-banner publish-effects">
-            <span>
-                Filler text
-            </span>
-        </p>
+        <li className="publish-effect-item">
+            {icon}
+            <span>{text}</span>
+        </li>
     );
 }
 
 function PublishEffect() {
-    const icons =[{
+    const effectBlock =[{
         id: 0,
-        text: 'When you Publish',
-        icon: null
-    }, {
-        id: 1,
         text: 'Each group gets a private channel. Only its members and you can read it',
         icon: padlockIcon
     }, {
-        id: 2,
+        id: 1,
         text: 'You can still add, move, remove, students. Groups update right away.',
         icon: swapIcon
     }, {
-        id: 3,
+        id: 2,
         text: 'Students get an in-app notification and an email with their group',
         icon: bellIcon       
     }, {
-        id: 4,
+        id: 3,
         text: 'Changes after publishing are logged. Groups can not be unpublished',
         icon: warningIcon
     }]
+
+    return (
+        <section className="publish-effect">
+            <h3 className="sv-h2">When you publish</h3>
+            <ul className="publish-effect-list">
+                {effectBlock.map((effect) => (
+                    <PublishEffectItem
+                        key={effect.id}
+                        icon={effect.icon}
+                        text={effect.text}
+                    />
+                ))}
+            </ul>
+        </section>
+    );
 }
 
 function PublishDialogFooter({ groupCount, remainingWarnings, canPublish, onClose, onConfirm, publishing, error }) {
@@ -202,12 +247,29 @@ function PublishDialogFooter({ groupCount, remainingWarnings, canPublish, onClos
     );
 }
 
-export default function PublishGroupDialog({ review, children, onClose, onConfirm, blockers = [], publishing = false, error }) {
+export default function PublishGroupDialog({
+    review,
+    unplacedStudents = [],
+    children,
+    onClose,
+    onConfirm,
+    blockers = [],
+    publishing = false,
+    error,
+}) {
     const dialogRef = useRef(null);
     const [acceptedWarningIds, setAcceptedWarningIds] = useState(() => new Set());
-    const warnings = review?.warnings ?? [];
+    const warnings = [
+        ...(review?.warnings ?? []),
+        ...unplacedStudents.map(({ uid, name, reason }) => ({
+            id: `unplaced-student:${uid}`,
+            title: `${name} still needs a group.`,
+            message: reason,
+        })),
+    ];
     const remainingWarnings = warnings.filter((warning) => !acceptedWarningIds.has(warning.id)).length;
     const canPublish = blockers.length === 0 && !publishing;
+    const [note, setNote] = useState("");
 
     useEffect(() => {
         const dialog = dialogRef.current;
@@ -261,7 +323,13 @@ export default function PublishGroupDialog({ review, children, onClose, onConfir
                             disabled={publishing}
                         />
                     )}
-                    {/* Put Publish Event Here */}
+                    <PublishEffect />
+                    <StudentNoteInput
+                        note={note}
+                        maxLength={500}
+                        onNoteChange={setNote}
+                        disabled={publishing}
+                    />
                 </>
             )}
             {children}
@@ -271,7 +339,7 @@ export default function PublishGroupDialog({ review, children, onClose, onConfir
                     remainingWarnings={remainingWarnings}
                     canPublish={canPublish}
                     onClose={dismiss}
-                    onConfirm={onConfirm}
+                    onConfirm={() => onConfirm(note.trim())}
                     publishing={publishing}
                     error={error}
                 />
