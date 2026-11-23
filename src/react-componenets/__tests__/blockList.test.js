@@ -1,66 +1,103 @@
-// Tests for the block list helpers ("Edit Matching Exclusion List").
-// This was made with the aid of claude
-import { blockedUids, confirmationText, filterClassmates, initials, makeEntry } from "../utils/blockList";
+// Tests for the block list methods on GroupService ("Edit Matching Exclusion List").
+// Claude Opus 5.5 was used as part of generate for this file.
+import { deleteDoc, getDocs, setDoc } from "firebase/firestore";
+import { addBlock, firebaseGroupService, getBlockList, removeBlock } from "../utils/groupService";
 
-const classmates = [
-  { uid: "me", name: "Kelvin Ng" },
-  { uid: "js", name: "John Smith" },
-  { uid: "jd", name: "Jane Doe" },
-  { uid: "jo", name: "Johnny Appleseed" },
-];
+jest.mock("firebase/firestore", () => ({
+  collection: jest.fn((db, ...path) => ({ path: path.join("/") })),
+  doc: jest.fn((parent, ...path) => ({ path: [parent.path, ...path].join("/") })),
+  getDoc: jest.fn(),
+  getDocs: jest.fn(),
+  setDoc: jest.fn(),
+  deleteDoc: jest.fn(),
+  writeBatch: jest.fn(),
+  serverTimestamp: jest.fn(() => "mock-timestamp"),
+}));
 
-describe("filterClassmates", () => {
-  test("matches names case-insensitively and sorts them", () => {
-    const result = filterClassmates(classmates, "JOHN", "me", []);
-    expect(result.map((c) => c.uid)).toEqual(["js", "jo"]);
-  });
+jest.mock("../firebase", () => ({ db: {} }), { virtual: true });
+jest.mock("../utils/surveyService", () => ({ getStudents: jest.fn() }));
 
-  test("never offers yourself", () => {
-    expect(filterClassmates(classmates, "kelvin", "me", [])).toEqual([]);
-  });
+const entry = {
+  blockedUid: "js",
+  blockedName: "John Smith",
+  reason: "  conflict on a project  ",
+  addedDuringRound: 1,
+  effectiveFromRound: 2,
+};
 
-  test("hides classmates already on the list", () => {
-    const result = filterClassmates(classmates, "john", "me", ["js"]);
-    expect(result.map((c) => c.uid)).toEqual(["jo"]);
-  });
-
-  test("returns nothing for empty search text", () => {
-    expect(filterClassmates(classmates, "   ", "me", [])).toEqual([]);
-  });
+beforeEach(() => {
+  jest.clearAllMocks();
+  jest.spyOn(console, "error").mockImplementation(() => {});
 });
 
-describe("makeEntry", () => {
-  test("builds the stored entry with a trimmed reason and next round", () => {
-    const entry = makeEntry({ uid: "js", name: "John Smith" }, "  conflict on a project  ", 2);
-    expect(entry).toEqual({
+afterEach(() => {
+  console.error.mockRestore();
+});
+
+test("addBlock saves the entry under the course and student", async () => {
+  setDoc.mockResolvedValue();
+  await addBlock("cos420", "me", entry);
+
+  expect(setDoc).toHaveBeenCalledWith(
+    { path: "courses/cos420/blockLists/me/entries/js" },
+    {
       blockedUid: "js",
       blockedName: "John Smith",
       reason: "conflict on a project",
-      appliesFromRound: 2,
-    });
-  });
-
-  test("allows a missing reason and caps long ones at 500 characters", () => {
-    expect(makeEntry({ uid: "js", name: "John Smith" }, undefined, 1).reason).toBe("");
-    expect(makeEntry({ uid: "js", name: "John Smith" }, "x".repeat(800), 1).reason).toHaveLength(500);
-  });
+      createdAt: "mock-timestamp",
+      addedDuringRound: 1,
+      effectiveFromRound: 2,
+    }
+  );
 });
 
-describe("display helpers", () => {
-  test("confirmationText names the classmate and the round", () => {
-    expect(confirmationText("John Smith", 2)).toBe(
-      "Matching will not place you and John Smith together, starting with Round 2. Your current group doesn't change."
-    );
+test("addBlock caps the reason at 500 characters", async () => {
+  setDoc.mockResolvedValue();
+  await addBlock("cos420", "me", { ...entry, reason: "x".repeat(800) });
+
+  expect(setDoc.mock.calls[0][1].reason).toHaveLength(500);
+});
+
+test("addBlock refuses to block yourself without calling Firestore", async () => {
+  await addBlock("cos420", "me", { ...entry, blockedUid: "me" });
+
+  expect(setDoc).not.toHaveBeenCalled();
+});
+
+test("addBlock resolves instead of rejecting when Firestore fails", async () => {
+  setDoc.mockRejectedValue({ message: "permission-denied" });
+
+  await expect(addBlock("cos420", "me", entry)).resolves.toBeUndefined();
+  expect(console.error).toHaveBeenCalled();
+});
+
+test("removeBlock deletes the entry", async () => {
+  deleteDoc.mockResolvedValue();
+  await removeBlock("cos420", "me", "js");
+
+  expect(deleteDoc).toHaveBeenCalledWith({ path: "courses/cos420/blockLists/me/entries/js" });
+});
+
+test("getBlockList returns entries sorted by name", async () => {
+  getDocs.mockResolvedValue({
+    docs: [
+      { data: () => ({ blockedUid: "jd", blockedName: "Jane Doe" }) },
+      { data: () => ({ blockedUid: "aa", blockedName: "Abe Adams" }) },
+    ],
   });
 
-  test("initials uses first and last name", () => {
-    expect(initials("John Smith")).toBe("JS");
-    expect(initials("John Q. Smith")).toBe("JS");
-    expect(initials("Cher")).toBe("C");
-    expect(initials("")).toBe("?");
-  });
+  const list = await getBlockList("cos420", "me");
+  expect(list.map((e) => e.blockedUid)).toEqual(["aa", "jd"]);
+});
 
-  test("blockedUids pulls the uids matching needs", () => {
-    expect(blockedUids([{ blockedUid: "js" }, { blockedUid: "jd" }])).toEqual(["js", "jd"]);
-  });
+test("getBlockList returns an empty list when Firestore fails", async () => {
+  getDocs.mockRejectedValue({ message: "permission-denied" });
+
+  await expect(getBlockList("cos420", "me")).resolves.toEqual([]);
+});
+
+test("firebaseGroupService exposes the block list methods", () => {
+  expect(firebaseGroupService.getBlockList).toBe(getBlockList);
+  expect(firebaseGroupService.addBlock).toBe(addBlock);
+  expect(firebaseGroupService.removeBlock).toBe(removeBlock);
 });
