@@ -153,6 +153,11 @@ test('asking for hours sends the request and shows it on the card', async () => 
 
 test('a round without warnings publishes after confirmation', async () => {
   const u = userEvent.setup();
+  service.getLatestRound.mockResolvedValue({
+    ...draft,
+    unplaced: [],
+    removed: draft.unplaced.map(({ uid }) => uid),
+  });
   await renderPage();
 
   await u.click(screen.getByRole('button', { name: 'Continue to publish' }));
@@ -166,6 +171,25 @@ test('a round without warnings publishes after confirmation', async () => {
   expect(await screen.findByText(/Groups published/)).toBeInTheDocument();
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Move John' })).not.toBeInTheDocument();
+});
+
+test('each student who needs a group appears in the publish checklist with their review reason', async () => {
+  const u = userEvent.setup();
+  await renderPage();
+
+  await u.click(screen.getByRole('button', { name: 'Continue to publish' }));
+  const dialog = within(screen.getByRole('dialog'));
+  const tom = dialog.getByRole('checkbox', { name: /Tom still needs a group.*Didn't fill out the survey/ });
+  const joan = dialog.getByRole('checkbox', { name: /Joan still needs a group.*Free only on Saturdays/ });
+  const publish = dialog.getByRole('button', { name: 'Publish 3 groups' });
+  expect(dialog.getByRole('status')).toHaveTextContent('0 of 2 accepted');
+  await u.click(tom);
+  expect(publish).toBeDisabled();
+  await u.click(joan);
+  expect(publish).toBeEnabled();
+  await u.click(publish);
+  expect(await screen.findByText(/2 students still need a group/)).toBeInTheDocument();
+  expect(service.publishRound).toHaveBeenCalledTimes(1);
 });
 
 test('each scheduling warning needs its own acknowledgment and closing resets the checklist', async () => {
@@ -224,7 +248,8 @@ test('a saved group with a block list conflict cannot be published', async () =>
   await u.click(screen.getByRole('button', { name: 'Continue to publish' }));
   const dialog = within(screen.getByRole('dialog'));
   expect(dialog.getByText('Group 1 has a block list conflict.')).toBeInTheDocument();
-  expect(dialog.queryByRole('checkbox')).not.toBeInTheDocument();
+  expect(dialog.queryByRole('checkbox', { name: /block list conflict/ })).not.toBeInTheDocument();
+  for (const warning of dialog.getAllByRole('checkbox')) await u.click(warning);
   expect(dialog.getByRole('button', { name: 'Publish 1 group' })).toBeDisabled();
   expect(service.publishRound).not.toHaveBeenCalled();
 });

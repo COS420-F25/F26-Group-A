@@ -117,6 +117,18 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
   const published = round.status === "published";
   const groupsToPublish = round.groups.filter((group) => group.memberIds.length > 0);
   const publishChecks = showPublishDialog ? getPublishWarnings(groupsToPublish, byId) : null;
+  const unplacedStudents = publishChecks
+    ? round.unplaced.flatMap(({ uid }) => {
+      const student = byId[uid];
+      if (!student) return [];
+      const best = previewMove(student, round.groups, byId).find((option) => option.bestFit);
+      return [{
+        uid,
+        name: student.name,
+        reason: describeUnplacedStudent(student, best),
+      }];
+    })
+    : [];
 
   function change(action) {
     needsSave.current = true;
@@ -256,6 +268,7 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
             warnings: publishChecks.warnings,
             preview: null,
           }}
+          unplacedStudents={unplacedStudents}
           blockers={publishChecks.blockers}
           onClose={() => setShowPublishDialog(false)}
           onConfirm={handlePublish}
@@ -420,12 +433,14 @@ function NeedsGroupDetails({ entry, student, best }) {
     <>
       {lines.length > 0 && <ul style={{ ...s.list, fontSize: 12, color: color.subtext, margin: "4px 0" }}>{lines}</ul>}
       <p style={{ fontSize: 13, margin: "4px 0 0" }}>
-        {best
-          ? `Shares ${joinTimes(best.shared)} with ${best.name}.`
-          : unplacedReason(student)}
+        {describeUnplacedStudent(student, best)}
       </p>
     </>
   );
+}
+
+function describeUnplacedStudent(student, best) {
+  return best ? `Shares ${joinTimes(best.shared)} with ${best.name}.` : unplacedReason(student);
 }
 
 function MoveMenu({ student, options, onMove, onAsk, onRemove, onClose }) {
