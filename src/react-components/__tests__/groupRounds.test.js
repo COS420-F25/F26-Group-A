@@ -14,7 +14,7 @@ import {
   readAvailability,
   studentsFromSurvey,
   unplacedReason,
-} from '../utils/groupRounds.js';
+} from '@groups/groupRounds.js';
 
 const student = (uid, availability, extra = {}) => ({
   uid,

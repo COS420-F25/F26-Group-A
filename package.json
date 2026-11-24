@@ -48,13 +48,21 @@
   },
   "jest": {
     "testEnvironment": "jsdom",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1",
+      "^@react-components/(.*)$": "<rootDir>/src/react-components/$1",
+      "^@authent/(.*)$": "<rootDir>/src/react-components/authent/$1",
+      "^@groups/(.*)$": "<rootDir>/src/react-components/groups/$1",
+      "^@survey/(.*)$": "<rootDir>/src/react-components/survey/$1",
+      "^@utils/(.*)$": "<rootDir>/src/react-components/utils/$1"
+    },
     "setupFilesAfterEnv": [
-      "<rootDir>/src/react-componenets/setup.js"
+      "<rootDir>/src/react-components/setup.js"
     ],
     "collectCoverageFrom": [
-      "src/react-componenets/**/*.{js,jsx}",
-      "!src/react-componenets/__tests__/**",
-      "!src/react-componenets/setup.js"
+      "src/react-components/**/*.{js,jsx}",
+      "!src/react-components/__tests__/**",
+      "!src/react-components/setup.js"
     ],
     "coverageReporters": [
       "text",

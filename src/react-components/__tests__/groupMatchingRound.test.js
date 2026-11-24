@@ -11,7 +11,7 @@ import {
   byMatchingQuestions,
   strategyFor,
   rareAnswerFlags,
-} from "../utils/groupMatchingRound";
+} from "@groups/groupMatchingRound";
 
 // A fake class member, in the same shape the module's functions take
 const student = (uid, availability = [], ifNeeded = [], extra = {}) => ({

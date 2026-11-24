@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import StudentSurveys from '../structure/StudentSurveys';
+import StudentSurveys from '@survey/StudentSurveys';
 
-jest.mock('../utils/surveyService', () => ({
+jest.mock('@survey/surveyService', () => ({
   watchOpenSurveys: jest.fn((cb) => {
     cb([
       {

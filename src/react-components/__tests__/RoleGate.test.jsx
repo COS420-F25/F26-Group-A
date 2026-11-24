@@ -1,11 +1,11 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import RoleGate from '../RoleGate.jsx';
+import RoleGate from '@/RoleGate.jsx';
 
 // Mock the named export `useUserProfile`
 const mockUseUserProfile = jest.fn();
 
-jest.mock('../useUserProfile', () => ({
+jest.mock('@authent/useUserProfile', () => ({
   useUserProfile: () => mockUseUserProfile(),
 }));
 

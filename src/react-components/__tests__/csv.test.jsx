@@ -1,4 +1,4 @@
-import { csvCell, csvFileName, responsesToCsv } from '../utils/csv.js';
+import { csvCell, csvFileName, responsesToCsv } from '@utils/csv.js';
 
 describe('CSV Utilities', () => {
   test('csvCell handles formula injection protection and commas/quotes escaping', () => {

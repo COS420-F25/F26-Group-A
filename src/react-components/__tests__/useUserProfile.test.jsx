@@ -9,12 +9,12 @@ jest.mock('firebase/firestore', () => ({
   onSnapshot: jest.fn(),
 }));
 
-jest.mock('../firebase', () => ({
+jest.mock('@authent/firebase', () => ({
   auth: {},
   db: {},
 }), { virtual: true });
 
-import { useUserProfile } from '../useUserProfile';
+import { useUserProfile } from '@authent/useUserProfile';
 import { onAuthStateChanged } from 'firebase/auth';
 import { onSnapshot } from 'firebase/firestore';
 

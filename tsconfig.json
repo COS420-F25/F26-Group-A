@@ -4,12 +4,12 @@
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "paths": {
-        "@/*": ["src/*"],
-        "@react-components/*": ["src/react-components/*"],
-        "@authent/*": ["src/react-components/authent/*"],
-        "@groups/*": ["src/react-components/groups/*"],
-        "@survey/*": ["src/react-components/survey/*"],
-        "@utils/*": ["src/react-components/utils/*"]
+        "@/*": ["./src/*"],
+        "@react-components/*": ["./src/react-components/*"],
+        "@authent/*": ["./src/react-components/authent/*"],
+        "@groups/*": ["./src/react-components/groups/*"],
+        "@survey/*": ["./src/react-components/survey/*"],
+        "@utils/*": ["./src/react-components/utils/*"]
     }
   }
 }

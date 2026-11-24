@@ -1,7 +1,7 @@
 // Tests for the block list methods on GroupService ("Edit Matching Exclusion List").
 // Claude Opus 5.5 was used as part of generate for this file.
 import { deleteDoc, getDocs, setDoc } from "firebase/firestore";
-import { addBlock, firebaseGroupService, getBlockList, removeBlock } from "../utils/groupService";
+import { addBlock, firebaseGroupService, getBlockList, removeBlock } from "@groups/groupService";
 
 jest.mock("firebase/firestore", () => ({
   collection: jest.fn((db, ...path) => ({ path: path.join("/") })),
@@ -14,8 +14,8 @@ jest.mock("firebase/firestore", () => ({
   serverTimestamp: jest.fn(() => "mock-timestamp"),
 }));
 
-jest.mock("../firebase", () => ({ db: {} }), { virtual: true });
-jest.mock("../utils/surveyService", () => ({ getStudents: jest.fn() }));
+jest.mock("@authent/firebase", () => ({ db: {} }), { virtual: true });
+jest.mock("@survey/surveyService", () => ({ getStudents: jest.fn() }));
 
 const entry = {
   blockedUid: "js",

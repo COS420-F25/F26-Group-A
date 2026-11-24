@@ -1,15 +1,15 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import SurveyPage from '../SurveyPage';
-import { useUserProfile } from '../useUserProfile';
+import SurveyPage from '@/pagedeps/SurveyPage';
+import { useUserProfile } from '@authent/useUserProfile';
 
-jest.mock('../useUserProfile', () => ({
+jest.mock('@authent/useUserProfile', () => ({
   useUserProfile: jest.fn(),
 }));
 
-jest.mock('../structure/InstructorSurveys', () => () => <div>Instructor Dashboard</div>);
-jest.mock('../structure/StudentSurveys', () => () => <div>Student Dashboard</div>);
+jest.mock('@survey/InstructorSurveys', () => () => <div>Instructor Dashboard</div>);
+jest.mock('@survey/StudentSurveys', () => () => <div>Student Dashboard</div>);
 
 describe('SurveyPage Component', () => {
   const mockUser = { uid: 'user-123', email: 'test@example.com' };

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import PublishGroupDialog from "../PublishGroupDialog.jsx";
+import PublishGroupDialog from "@groups/PublishGroupDialog.jsx";
 
 const review = {
     roundNumber: 1,

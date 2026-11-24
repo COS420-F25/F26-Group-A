@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
-import AvailabilityGrid from '../content/AvailabilityGrid.jsx';
+import AvailabilityGrid from '@survey/AvailabilityGrid.jsx';
 
 describe('AvailabilityGrid Component', () => {
   const defaultProps = {

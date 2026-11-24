@@ -12,15 +12,15 @@ import {
   updateProfile,
   signOut,
 } from 'firebase/auth';
-import { auth } from '../firebase';
-import { createProfile } from '../accounts';
-import { navigate } from '../navigate.js';
-import FirebaseAuth from '../FirebaseAuth.jsx';
+import { auth } from '@authent/firebase';
+import { createProfile } from '@authent/accounts';
+import { navigate } from '@utils/navigate.js';
+import FirebaseAuth from '@authent/FirebaseAuth.jsx';
 
 // ---------- Mocks ----------
 const mockUseUserProfile = jest.fn();
 
-jest.mock('../useUserProfile', () => ({
+jest.mock('@authent/useUserProfile', () => ({
   useUserProfile: () => mockUseUserProfile(),
 }));
 
@@ -34,8 +34,8 @@ jest.mock('firebase/auth', () => ({
   GoogleAuthProvider: class GoogleAuthProvider {},
 }));
 
-jest.mock('../firebase', () => ({ auth: { name: 'mock-auth' } }));
-jest.mock('../accounts', () => ({ createProfile: jest.fn() }));
+jest.mock('@authent/firebase', () => ({ auth: { name: 'mock-auth' } }));
+jest.mock('@authent/accounts', () => ({ createProfile: jest.fn() }));
 
 // ---------- Fixtures & helpers ----------
 const fbUser = { uid: 'u1', email: 'jane@example.com', displayName: 'Jane Doe' };

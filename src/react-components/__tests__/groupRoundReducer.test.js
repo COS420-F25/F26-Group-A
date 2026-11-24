@@ -1,4 +1,4 @@
-import { initialState, roundReducer } from '../utils/groupRoundReducer.js';
+import { initialState, roundReducer } from '@groups/groupRoundReducer.js';
 
 const round = {
   roundNumber: 1,

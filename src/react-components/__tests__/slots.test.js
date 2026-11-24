@@ -1,4 +1,4 @@
-import { slotId, hourLabel, sortSlots, formatRange, summarizeSlots } from '../utils/slots.js';
+import { slotId, hourLabel, sortSlots, formatRange, summarizeSlots } from '@utils/slots.js';
 
 test('slotId pads single-digit hours with a zero', () => {
   expect(slotId('Mon', 9)).toBe('Mon-09');

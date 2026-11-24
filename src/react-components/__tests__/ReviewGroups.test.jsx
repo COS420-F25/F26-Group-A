@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import ReviewGroups from '../content/ReviewGroups.jsx';
+import ReviewGroups from '@groups/ReviewGroups.jsx';
 
 const user = { uid: 'prof' };
 const survey = {

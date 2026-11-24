@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { act, renderHook } from '@testing-library/react';
-import { useHashRoute } from '../useHashRoute';
+import { useHashRoute } from '@utils/useHashRoute';
 
 describe('useHashRoute', () => {
   beforeEach(() => {

@@ -1,11 +1,11 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import InstructorSurveys from '../structure/InstructorSurveys';
-import * as surveyService from '../utils/surveyService';
-import * as csvUtils from '../utils/csv';
+import InstructorSurveys from '@survey/InstructorSurveys';
+import * as surveyService from '@survey/surveyService';
+import * as csvUtils from '@utils/csv';
 
-jest.mock('../utils/surveyService', () => ({
+jest.mock('@survey/surveyService', () => ({
   watchMySurveys: jest.fn((uid, cb) => {
     cb([
       {
@@ -32,7 +32,7 @@ jest.mock('../utils/surveyService', () => ({
   setSurveyStatus: jest.fn().mockResolvedValue(),
 }), { virtual: true });
 
-jest.mock('../utils/csv', () => ({
+jest.mock('@utils/csv', () => ({
   csvFileName: (title) => `${title}.csv`,
   responsesToCsv: jest.fn(() => 'csv-data'),
   downloadCsv: jest.fn(),

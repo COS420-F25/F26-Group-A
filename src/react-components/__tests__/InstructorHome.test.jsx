@@ -1,11 +1,11 @@
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { signOut } from 'firebase/auth';
-import { navigate } from '../navigate.js';
-import InstructorHome, { STEPS, FAQS } from '../InstructorHome.jsx';
+import { navigate } from '@utils/navigate.js';
+import InstructorHome, { STEPS, FAQS } from '@/pagedeps/InstructorHome.jsx';
 
 jest.mock('firebase/auth', () => ({ signOut: jest.fn(() => Promise.resolve()) }));
-jest.mock('../firebase', () => ({ auth: { name: 'mock-auth' } }));
+jest.mock('@authent/firebase', () => ({ auth: { name: 'mock-auth' } }));
 
 describe('InstructorHome', () => {
     beforeEach(() => {

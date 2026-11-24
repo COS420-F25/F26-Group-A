@@ -1,4 +1,4 @@
-import { createProfile } from '../accounts.js';
+import { createProfile } from '@authent/accounts.js';
 import { setDoc } from 'firebase/firestore';
 
 jest.mock('firebase/firestore', () => ({
@@ -7,7 +7,7 @@ jest.mock('firebase/firestore', () => ({
   serverTimestamp: jest.fn(() => 'mock-timestamp'),
 }));
 
-jest.mock('../firebase', () => ({
+jest.mock('@authent/firebase', () => ({
   db: {},
 }), { virtual: true });
 

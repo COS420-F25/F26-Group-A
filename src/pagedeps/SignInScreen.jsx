@@ -14,7 +14,7 @@ import {
   OrDivider,
   TextField,
   useRedirectWhenSignedIn,
-} from "./authShared.jsx";
+} from "@authent/authShared.jsx";
 
 // Real Firebase sign-in (email + password, or Google). Once signed in,
 // the person is sent to the page for the role saved on their account.

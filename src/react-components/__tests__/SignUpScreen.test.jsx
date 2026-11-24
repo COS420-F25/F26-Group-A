@@ -2,12 +2,12 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { createProfile } from '../accounts';
-import SignUpScreen from '../SignUpScreen.jsx';
-import { navigate } from '../authShared.jsx';
+import { createProfile } from '@authent/accounts';
+import SignUpScreen from '@/pagedeps/SignUpScreen.jsx';
+import { navigate } from '@authent/authShared.jsx';
 
 const mockUseUserProfile = jest.fn();
-jest.mock('../useUserProfile', () => ({ useUserProfile: () => mockUseUserProfile() }));
+jest.mock('@authent/useUserProfile', () => ({ useUserProfile: () => mockUseUserProfile() }));
 jest.mock('firebase/auth', () => ({
     createUserWithEmailAndPassword: jest.fn(),
     updateProfile: jest.fn(),
@@ -15,8 +15,8 @@ jest.mock('firebase/auth', () => ({
     signOut: jest.fn(),
     GoogleAuthProvider: class GoogleAuthProvider {}
 }));
-jest.mock('../firebase', () => ({ auth: { name: 'mock-auth' } }));
-jest.mock('../accounts', () => ({ createProfile: jest.fn() }));
+jest.mock('@authent/firebase', () => ({ auth: { name: 'mock-auth' } }));
+jest.mock('@authent/accounts', () => ({ createProfile: jest.fn() }));
 
 beforeEach(() => {
     jest.clearAllMocks();

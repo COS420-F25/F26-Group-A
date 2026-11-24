@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import GroupsDemoPage from '../structure/GroupsDemoPage.jsx';
+import GroupsDemoPage from '@/pagedeps/GroupsDemoPage.jsx';
 
 test('shows the sample groups and the Needs a group list without Firebase', async () => {
   render(<GroupsDemoPage />);

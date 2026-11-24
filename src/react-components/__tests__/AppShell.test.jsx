@@ -1,9 +1,9 @@
 import '@testing-library/jest-dom';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import AppShell, { ActionBar, Page } from '../structure/AppShell.jsx';
-import Breadcrumb from '../structure/Breadcrumb.jsx';
-import BlockListStep from '../content/BlockListStep.jsx';
+import AppShell, { ActionBar, Page } from '@utils/AppShell.jsx';
+import Breadcrumb from '@utils/Breadcrumb.jsx';
+import BlockListStep from '@groups/BlockListStep.jsx';
 
 describe('AppShell', () => {
   it('shows the page inside the main content wrapper', () => {

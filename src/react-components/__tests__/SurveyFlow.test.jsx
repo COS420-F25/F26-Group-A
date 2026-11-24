@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import SurveyFlow from '../structure/SurveyFlow';
-import * as surveyService from '../utils/surveyService';
+import SurveyFlow from '@survey/SurveyFlow';
+import * as surveyService from '@survey/surveyService';
 
-jest.mock('../utils/surveyService', () => ({
+jest.mock('@survey/surveyService', () => ({
   getMyResponse: jest.fn().mockResolvedValue(null),
   saveResponse: jest.fn().mockResolvedValue(),
 }), { virtual: true });

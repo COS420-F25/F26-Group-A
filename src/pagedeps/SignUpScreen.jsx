@@ -16,7 +16,7 @@ import {
   OrDivider,
   TextField,
   useRedirectWhenSignedIn,
-} from "./authShared.jsx";
+} from "@authent/authShared.jsx";
 
 // Real Firebase sign-up. Step 1: pick a role. Step 2: create the
 // account (email + password, or Google) and save the role.

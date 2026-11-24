@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import SurveyDetail from '../content/SurveyDetail';
-import InstructorSurveys from '../structure/InstructorSurveys';
+import SurveyDetail from '@survey/SurveyDetail';
+import InstructorSurveys from '@survey/InstructorSurveys';
 
 const survey = {
   id: 'abc123',
@@ -13,7 +13,7 @@ const survey = {
   createdAt: { toDate: () => new Date() },
 };
 
-jest.mock('../utils/surveyService', () => ({
+jest.mock('@survey/surveyService', () => ({
   watchMySurveys: jest.fn((uid, onData) => {
     onData([survey]);
     return () => {};
@@ -25,8 +25,8 @@ jest.mock('../utils/surveyService', () => ({
   getStudents: jest.fn().mockResolvedValue([]),
   setSurveyStatus: jest.fn(),
 }));
-jest.mock('../utils/groupService', () => ({ firebaseGroupService: {} }));
-jest.mock('../content/ReviewGroups', () => (props) => <div>Review groups for {props.surveyId}</div>);
+jest.mock('@groups/groupService', () => ({ firebaseGroupService: {} }));
+jest.mock('@groups/ReviewGroups', () => (props) => <div>Review groups for {props.surveyId}</div>);
 
 afterEach(() => {
   window.location.hash = '';

@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import SurveyBuilder from '../structure/SurveyBuilder';
-import * as surveyService from '../utils/surveyService';
+import SurveyBuilder from '@survey/SurveyBuilder';
+import * as surveyService from '@survey/surveyService';
 
-jest.mock('../utils/surveyService', () => ({
+jest.mock('@survey/surveyService', () => ({
   DEFAULT_QUESTIONS: [
     { id: 'q1', type: 'interests', label: 'Interests & About You', required: true },
   ],

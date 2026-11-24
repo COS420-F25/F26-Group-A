@@ -1,4 +1,4 @@
-import { matchSurveyResponses } from "../utils/groupMatching.js";
+import { matchSurveyResponses } from "@groups/groupMatching.js";
 
 test("groups four students who share two weekly slots", () => {
   const survey = { questions: [{ id: "weekly-schedule", type: "availability" }] };
