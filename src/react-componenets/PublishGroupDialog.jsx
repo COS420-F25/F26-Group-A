@@ -1,4 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { createDemoGroupService } from "./utils/demoGroupService";
+import { sharedTimes, studentsFromSurvey } from "./utils/groupRounds";
+import { hourLabel } from "./utils/slots";
 
 function PublishDialogHeader({ roundNumber, studentCount, groupCount, instructorName, courseName, onClose, disabled }) {
     const students = studentCount === 1 ? "student" : "students";
@@ -247,6 +250,140 @@ function PublishDialogFooter({ groupCount, remainingWarnings, canPublish, onClos
     );
 }
 
+async function loadDemoGroupPreview() {
+    const service = createDemoGroupService();
+    const [survey, roster, responses, round] = await Promise.all([
+        service.getSurvey(),
+        service.getStudents(),
+        service.getResponses(),
+        service.getLatestRound(),
+    ]);
+
+    const students = studentsFromSurvey(survey, roster, responses);
+    const byUid = new Map(students.map((student) => [student.uid, student]));
+    const group = round.groups.find(({ memberIds }) => memberIds.some((uid) => byUid.has(uid)));
+    if (!group) return null;
+
+    const members = group.memberIds.map((uid) => byUid.get(uid)).filter(Boolean);
+    const avatarColors = ["#a91555", "#2848c9", "#087669", "#a33d10", "#6d28d9", "#1e6091"];
+
+    for (let index = avatarColors.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [avatarColors[index], avatarColors[swapIndex]] = [avatarColors[swapIndex], avatarColors[index]];
+    }
+
+    return {
+        groupName: group.name,
+        viewerUid: members[0].uid,
+        members: members.map(({ uid, name }, index) => ({
+            uid,
+            displayName: name,
+            avatarColor: avatarColors[index % avatarColors.length],
+        })),
+        meetingSlots: sharedTimes(members).map(({ slot, ifNeeded }) => {
+            const [day, hour] = slot.split("-");
+            const start = hourLabel(Number(hour));
+            const end = hourLabel(Number(hour) + 1);
+            const startLabel = start.slice(-2) === end.slice(-2) ? start.slice(0, -3) : start;
+
+            return { slotID: slot, label: `${day} ${startLabel}–${end}`, ifNeeded };
+        }),
+    };
+}
+
+function DemoStudentGroupPreview() {
+    const [preview, setPreview] = useState(undefined);
+
+    useEffect(() => {
+        let active = true;
+
+        loadDemoGroupPreview()
+            .catch(() => null)
+            .then((result) => {
+                if (active) setPreview(result);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    if (preview) return <StudentGroupPreview preview={preview} />;
+
+    return (
+        <p className="sv-hint" role="status" style={{ marginInline: "1.5rem" }}>
+            {preview === undefined ? "Loading student preview…" : "Student preview unavailable."}
+        </p>
+    );
+}
+
+function StudentGroupPreview({ preview }) {
+    const { groupName, viewerUid, members, meetingSlots } = preview;
+
+    return (
+        <section style={{ marginInline: "1.5rem" }}>
+            <header className="sv-card-head sv-row sv-muted sv-small">
+                <h3>What a student will see</h3>
+                <span>Example: {groupName}</span>
+            </header>
+
+            <StudentGroupPreviewCard groupName={groupName}>
+                <ul className="sv-row" aria-label="Group members">
+                    {members.map((student) => (
+                        <PreviewStudentChip
+                            key={student.uid}
+                            student={student}
+                            isSelf={student.uid === viewerUid}
+                        />
+                    ))}
+                </ul>
+
+                <div className="sv-row" style={{ marginTop: "0.5rem" }}>
+                    <strong className="sv-small sv-muted">Can meet</strong>
+                    {meetingSlots.length === 0 && <span>No shared times yet.</span>}
+                    {meetingSlots.map((slot) => (
+                        <PreviewMeetingSlotChip key={slot.slotID} slot={slot} />
+                    ))}
+                </div>
+            </StudentGroupPreviewCard>
+        </section>
+    );
+}
+
+function StudentGroupPreviewCard({ groupName, children }) {
+    return (
+        <div className="sv-card" style={{ background: "var(--surface-hover)" }}>
+            <h4 className="sv-h2">Your reflection group: {groupName}</h4>
+            {children}
+        </div>
+    );
+}
+
+function PreviewStudentChip({ student, isSelf }) {
+    const initials = student.displayName.trim().split(/\s+/).slice(0, 2)
+        .map((word) => word.charAt(0)).join("").toUpperCase();
+
+    return (
+        <li className="sv-row">
+            <span className="sv-avatar" style={{ backgroundColor: student.avatarColor }} aria-hidden="true">
+                {initials}
+            </span>
+            <span>{student.displayName}{isSelf && " (you)"}</span>
+        </li>
+    );
+}
+
+function PreviewMeetingSlotChip({ slot }) {
+    return (
+        <span
+            className="sv-pill"
+            style={slot.ifNeeded ? { outline: "1px dashed var(--accent)" } : undefined}
+        >
+            {slot.label}{slot.ifNeeded && " · if needed"}
+        </span>
+    );
+}
+
 export default function PublishGroupDialog({
     review,
     unplacedStudents = [],
@@ -330,6 +467,7 @@ export default function PublishGroupDialog({
                         onNoteChange={setNote}
                         disabled={publishing}
                     />
+                    <DemoStudentGroupPreview />
                 </>
             )}
             {children}
