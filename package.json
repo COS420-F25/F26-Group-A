@@ -26,7 +26,10 @@
     "tailwindcss": "^4.3.4"
   },
   "allowScripts": {
-    "esbuild": true
+    "esbuild": true,
+    "protobufjs@7.6.6": true,
+    "protobufjs@6.11.6": true,
+    "@parcel/watcher@2.6.0": true
   },
   "overrides": {
     "@grpc/grpc-js": "^1.14.0"

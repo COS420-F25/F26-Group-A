@@ -11,17 +11,30 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { db } from "../firebase";
-import { sortSlots } from "./slots";
+import { db } from "@authent/firebase";
+import { sortSlots } from "@utils/slots";
 
 export const DEFAULT_QUESTIONS = [
-  { id: "interests", type: "interests", label: "Interests & About You", required: true },
+  {
+    id: "interests",
+    type: "interests",
+    label: "Interests & About You",
+    required: true,
+  },
   { id: "gender", type: "gender", label: "Gender", required: false },
-  { id: "availability", type: "availability", label: "Availability", required: true },
+  {
+    id: "availability",
+    type: "availability",
+    label: "Availability",
+    required: true,
+  },
   { id: "blocklist", type: "blocklist", label: "Block list", required: false },
 ];
 
-export async function sendSurvey(user, { title, description, questions, targetStudentUids, startHour, endHour }) {
+export async function sendSurvey(
+  user,
+  { title, description, questions, targetStudentUids, startHour, endHour },
+) {
   const ref = await addDoc(collection(db, "surveys"), {
     title: title.trim(),
     description: description.trim(),
@@ -48,16 +61,22 @@ export function watchResponses(surveyId, onData, onError) {
       list.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
       onData(list);
     },
-    onError
+    onError,
   );
 }
 
 export async function getStudents() {
-  const snap = await getDocs(query(collection(db, "users"), where("role", "==", "student")));
+  const snap = await getDocs(
+    query(collection(db, "users"), where("role", "==", "student")),
+  );
   return snap.docs
     .map((d) => {
       const data = d.data();
-      return { uid: d.id, name: data.displayName || data.email || "", email: data.email || "" };
+      return {
+        uid: d.id,
+        name: data.displayName || data.email || "",
+        email: data.email || "",
+      };
     })
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -77,7 +96,8 @@ export function saveResponse(surveyId, user, profile, answers) {
   });
 }
 
-const seconds = (survey) => survey.createdAt?.seconds ?? Number.MAX_SAFE_INTEGER;
+const seconds = (survey) =>
+  survey.createdAt?.seconds ?? Number.MAX_SAFE_INTEGER;
 
 function watch(q, onData, onError) {
   return onSnapshot(
@@ -87,14 +107,22 @@ function watch(q, onData, onError) {
       list.sort((a, b) => seconds(b) - seconds(a));
       onData(list);
     },
-    onError
+    onError,
   );
 }
 
 export function watchOpenSurveys(onData, onError) {
-  return watch(query(collection(db, "surveys"), where("status", "==", "open")), onData, onError);
+  return watch(
+    query(collection(db, "surveys"), where("status", "==", "open")),
+    onData,
+    onError,
+  );
 }
 
 export function watchMySurveys(uid, onData, onError) {
-  return watch(query(collection(db, "surveys"), where("createdBy", "==", uid)), onData, onError);
+  return watch(
+    query(collection(db, "surveys"), where("createdBy", "==", uid)),
+    onData,
+    onError,
+  );
 }

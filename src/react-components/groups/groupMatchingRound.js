@@ -18,7 +18,7 @@
 // - AvailabilityRequest -> surveys/{id}/hourRequests/{uid}
 // - Server.timeZone -> not stored. The UI shows "Eastern Time (ET)".
 
-import { DAYS, hourLabel, slotId, sortSlots } from "./slots";
+import { DAYS, hourLabel, slotId, sortSlots } from "@utils/slots";
 
 // ---------------------------------------------------------------------------
 // Presets: the 3 quick-pick buttons on "Meeting times & rules"
@@ -129,7 +129,9 @@ export function summarizeWindows(slots) {
   const days = DAYS.filter((day) => hoursByDay[day]);
   const rangesByDay = days.map((day) => hourRanges(hoursByDay[day]));
   const firstRanges = JSON.stringify(rangesByDay[0]);
-  const allSame = days.length > 0 && rangesByDay.every((ranges) => JSON.stringify(ranges) === firstRanges);
+  const allSame =
+    days.length > 0 &&
+    rangesByDay.every((ranges) => JSON.stringify(ranges) === firstRanges);
 
   if (allSame) {
     return `${head} · ${dayList(days)}, ${rangesByDay[0].map(compactRange).join(", ")}`;
@@ -172,7 +174,8 @@ export const RULE_TEMPLATES = [
     options: ["Lectures", "Homework", "Exams", "Projects", "Time management"],
     required: false,
     matchOn: "same",
-    ruleText: "Group students who say the same parts of the course have been hardest.",
+    ruleText:
+      "Group students who say the same parts of the course have been hardest.",
   },
   {
     id: "similarity-gender",
@@ -205,9 +208,11 @@ export function ruleTemplate(id) {
 // a new survey's questions can't change the shared templates above.
 // No block list until BlockListStep is more than a placeholder.
 export function defaultQuestions() {
-  return [AVAILABILITY_QUESTION, ruleTemplate("similarity-challenges"), ruleTemplate("similarity-gender")].map(
-    (q) => ({ ...q })
-  );
+  return [
+    AVAILABILITY_QUESTION,
+    ruleTemplate("similarity-challenges"),
+    ruleTemplate("similarity-gender"),
+  ].map((q) => ({ ...q }));
 }
 
 // ---------------------------------------------------------------------------
@@ -223,7 +228,8 @@ export const MIN_SHARED_ANSWERS = 3;
 // Never matched and never flagged: picking it is how a student opts out.
 export const PREFER_NOT_TO_SAY = "Prefer not to say";
 
-const RARE_ANSWER_REASON = "A student's answer to Gender is shared by fewer than three classmates.";
+const RARE_ANSWER_REASON =
+  "A student's answer to Gender is shared by fewer than three classmates.";
 
 // Flags each group that holds a student whose gender answer fewer than three
 // students gave. Matching never uses a rare answer, so the instructor is the
@@ -242,7 +248,8 @@ export function rareAnswerFlags(groups, students) {
   const counts = {};
   for (const s of students) {
     const answer = genderOf(s);
-    if (s.responded === false || !answer || answer === PREFER_NOT_TO_SAY) continue;
+    if (s.responded === false || !answer || answer === PREFER_NOT_TO_SAY)
+      continue;
     counts[answer] = (counts[answer] ?? 0) + 1;
   }
 
@@ -283,10 +290,17 @@ function toSet(slots) {
 // week order.
 // It never gives back counts, so nobody can work out who's free when.
 // Students who didn't answer are left out, since they told us nothing.
-export function suggestWindowsFor(uid, students, offered, { minClassmates = 3, max = 2 } = {}) {
+export function suggestWindowsFor(
+  uid,
+  students,
+  offered,
+  { minClassmates = 3, max = 2 } = {},
+) {
   const me = students.find((s) => s.uid === uid);
   const mine = me ? freeSet(me) : new Set();
-  const others = students.filter((s) => s.uid !== uid && s.responded !== false).map(freeSet);
+  const others = students
+    .filter((s) => s.uid !== uid && s.responded !== false)
+    .map(freeSet);
 
   let options = toSet(offered);
   if (options === null) {
@@ -315,7 +329,9 @@ export function suggestWindowsFor(uid, students, offered, { minClassmates = 3, m
 // It gives back a new object and never changes the one passed in, because
 // React only re-renders when it sees a new object.
 export function addIfNeeded(answer, windows) {
-  const old = Array.isArray(answer) ? { available: answer, ifNeeded: [] } : answer ?? {};
+  const old = Array.isArray(answer)
+    ? { available: answer, ifNeeded: [] }
+    : (answer ?? {});
   const available = [...(old.available ?? [])];
   const ifNeeded = new Set(old.ifNeeded ?? []);
   for (const window of windows) {
@@ -365,7 +381,9 @@ export function byMatchingQuestions(questions, students) {
     }
   }
 
-  const usable = (q, v) => v !== PREFER_NOT_TO_SAY && (counts.get(`${q.id}\u0000${v}`) ?? 0) >= MIN_SHARED_ANSWERS;
+  const usable = (q, v) =>
+    v !== PREFER_NOT_TO_SAY &&
+    (counts.get(`${q.id}\u0000${v}`) ?? 0) >= MIN_SHARED_ANSWERS;
 
   return (student, members, shared) => {
     let score = shared.length;

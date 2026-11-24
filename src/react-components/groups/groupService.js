@@ -1,9 +1,17 @@
-import { collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
-import { getStudents } from "./surveyService";
-import { HOUR_REQUEST_MESSAGE } from "./groupRounds";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  serverTimestamp,
+  setDoc,
+  writeBatch,
+} from "firebase/firestore";
+import { getStudents } from "@survey/surveyService";
+import { HOUR_REQUEST_MESSAGE } from "@groups/groupRounds";
 
-
-const database = async () => (await import("../firebase")).db;
+const database = async () => (await import("@authent/firebase")).db;
 
 export async function getSurvey(surveyId) {
   const db = await database();
@@ -27,16 +35,19 @@ export async function getLatestRound(surveyId) {
 
 export async function saveRound(surveyId, user, round) {
   const db = await database();
-  return setDoc(doc(db, "surveys", surveyId, "rounds", `round-${round.roundNumber}`), {
-    roundNumber: round.roundNumber,
-    status: round.status,
-    groups: round.groups,
-    unplaced: round.unplaced,
-    removed: round.removed ?? [],
-    lastChange: round.lastChange ?? "",
-    updatedBy: user.uid,
-    updatedAt: serverTimestamp(),
-  });
+  return setDoc(
+    doc(db, "surveys", surveyId, "rounds", `round-${round.roundNumber}`),
+    {
+      roundNumber: round.roundNumber,
+      status: round.status,
+      groups: round.groups,
+      unplaced: round.unplaced,
+      removed: round.removed ?? [],
+      lastChange: round.lastChange ?? "",
+      updatedBy: user.uid,
+      updatedAt: serverTimestamp(),
+    },
+  );
 }
 
 export async function publishRound(surveyId, user, round) {
@@ -44,18 +55,27 @@ export async function publishRound(surveyId, user, round) {
   const batch = writeBatch(db);
   for (const group of round.groups) {
     if (group.memberIds.length === 0) continue;
-    batch.set(doc(db, "surveys", surveyId, "groups", `r${round.roundNumber}-${group.id}`), {
-      roundNumber: round.roundNumber,
-      name: group.name,
-      memberIds: group.memberIds,
-      publishedBy: user.uid,
-      publishedAt: serverTimestamp(),
-    });
+    batch.set(
+      doc(
+        db,
+        "surveys",
+        surveyId,
+        "groups",
+        `r${round.roundNumber}-${group.id}`,
+      ),
+      {
+        roundNumber: round.roundNumber,
+        name: group.name,
+        memberIds: group.memberIds,
+        publishedBy: user.uid,
+        publishedAt: serverTimestamp(),
+      },
+    );
   }
   batch.set(
     doc(db, "surveys", surveyId, "rounds", `round-${round.roundNumber}`),
     { status: "published", publishedAt: serverTimestamp() },
-    { merge: true }
+    { merge: true },
   );
   await batch.commit();
 }
@@ -73,7 +93,8 @@ export async function askForHours(surveyId, uid) {
 // Stored at courses/{courseId}/blockLists/{uid}/entries/{blockedUid}.
 // These never reject: a failed read gives [], a failed write is logged and resolves.
 
-const blockEntries = (db, courseId, uid) => collection(db, "courses", courseId, "blockLists", uid, "entries");
+const blockEntries = (db, courseId, uid) =>
+  collection(db, "courses", courseId, "blockLists", uid, "entries");
 
 const logFailure = (action) => (err) => {
   console.error(`Block list ${action} failed:`, err?.message ?? err);
@@ -85,17 +106,21 @@ export async function getBlockList(courseId, uid) {
     (snap) =>
       snap.docs
         .map((d) => d.data())
-        .sort((a, b) => (a.blockedName ?? "").localeCompare(b.blockedName ?? "")),
+        .sort((a, b) =>
+          (a.blockedName ?? "").localeCompare(b.blockedName ?? ""),
+        ),
     (err) => {
       logFailure("read")(err);
       return [];
-    }
+    },
   );
 }
 
 export async function addBlock(courseId, uid, entry) {
   if (!entry?.blockedUid || entry.blockedUid === uid) {
-    logFailure("add")({ message: "You can't add yourself to your block list." });
+    logFailure("add")({
+      message: "You can't add yourself to your block list.",
+    });
     return;
   }
   const db = await database();
@@ -111,7 +136,10 @@ export async function addBlock(courseId, uid, entry) {
 
 export async function removeBlock(courseId, uid, blockedUid) {
   const db = await database();
-  await deleteDoc(doc(blockEntries(db, courseId, uid), blockedUid)).then(() => undefined, logFailure("remove"));
+  await deleteDoc(doc(blockEntries(db, courseId, uid), blockedUid)).then(
+    () => undefined,
+    logFailure("remove"),
+  );
 }
 
 export const firebaseGroupService = {

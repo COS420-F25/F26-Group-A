@@ -1,4 +1,4 @@
-import { useUserProfile } from "./useUserProfile";
+import { useUserProfile } from "@authent/useUserProfile";
 
 function Notice({ children }) {
   return (
@@ -24,15 +24,27 @@ export default function RoleGate({ allow, children }) {
 
   if (loading) return <Notice>Loading...</Notice>;
   if (!user) return <Notice>Sign in to see this page.</Notice>;
-  if (error) return <Notice>Could not load your account. Try refreshing the page.</Notice>;
+  if (error)
+    return (
+      <Notice>Could not load your account. Try refreshing the page.</Notice>
+    );
   if (!profile) {
-    return <Notice>Choose your role with the button at the top right to finish setting up your account.</Notice>;
+    return (
+      <Notice>
+        Choose your role with the button at the top right to finish setting up
+        your account.
+      </Notice>
+    );
   }
 
   const allowed = allow ? [].concat(allow) : null;
   if (allowed && !allowed.includes(profile.role)) {
-    return <Notice>This page is only for {allowed.join(" and ")} accounts.</Notice>;
+    return (
+      <Notice>This page is only for {allowed.join(" and ")} accounts.</Notice>
+    );
   }
 
-  return typeof children === "function" ? children({ user, profile }) : children;
+  return typeof children === "function"
+    ? children({ user, profile })
+    : children;
 }

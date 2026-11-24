@@ -1,4 +1,4 @@
-import { moveStudent, nextGroup } from "./groupRounds";
+import { moveStudent, nextGroup } from "@groups/groupRounds";
 
 export const initialState = { round: null, history: [] };
 
@@ -60,7 +60,9 @@ export function roundReducer(state, action) {
       if (!group) return state;
       return withChange(state, {
         ...round,
-        groups: round.groups.map((g) => (g.id === action.groupId ? { ...g, reviewed: !g.reviewed } : g)),
+        groups: round.groups.map((g) =>
+          g.id === action.groupId ? { ...g, reviewed: !g.reviewed } : g,
+        ),
         lastChange: `${group.reviewed ? "Unmarked" : "Marked"} ${group.name} as reviewed`,
       });
     }
@@ -70,17 +72,29 @@ export function roundReducer(state, action) {
         ...state,
         round: {
           ...round,
-          unplaced: round.unplaced.map((u) => (u.uid === action.uid ? { ...u, askedAt: action.askedAt } : u)),
+          unplaced: round.unplaced.map((u) =>
+            u.uid === action.uid ? { ...u, askedAt: action.askedAt } : u,
+          ),
         },
       };
 
     case "undo": {
       if (state.history.length === 0) return state;
-      return { round: state.history[state.history.length - 1], history: state.history.slice(0, -1) };
+      return {
+        round: state.history[state.history.length - 1],
+        history: state.history.slice(0, -1),
+      };
     }
 
     case "published":
-      return { round: { ...round, status: "published", lastChange: "Published groups" }, history: [] };
+      return {
+        round: {
+          ...round,
+          status: "published",
+          lastChange: "Published groups",
+        },
+        history: [],
+      };
 
     default:
       return state;

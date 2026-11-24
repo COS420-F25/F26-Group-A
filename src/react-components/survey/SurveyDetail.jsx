@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
-import { ActionBar, Page } from "../structure/AppShell";
-import Breadcrumb from "../structure/Breadcrumb";
-import { getStudents, setSurveyStatus, watchResponses } from "../utils/surveyService";
-import { csvFileName, downloadCsv, responsesToCsv } from "../utils/csv";
-import { formatRange } from "../utils/slots";
+import { ActionBar, Page } from "@utils/AppShell";
+import Breadcrumb from "@utils/Breadcrumb";
+import {
+  getStudents,
+  setSurveyStatus,
+  watchResponses,
+} from "@survey/surveyService";
+import { csvFileName, downloadCsv, responsesToCsv } from "@utils/csv";
+import { formatRange } from "@utils/slots";
 
 const LIFECYCLE = ["Set up", "Collect responses", "Match", "Review", "Publish"];
 
@@ -22,8 +26,8 @@ function buildMessage(survey, link) {
 function formatAnswerCell(q, ans) {
   if (ans == null || ans === "") return "—";
   if (q.type === "availability") {
-    const avail = Array.isArray(ans) ? ans : ans.available ?? [];
-    const ifNeeded = !Array.isArray(ans) ? ans.ifNeeded ?? [] : [];
+    const avail = Array.isArray(ans) ? ans : (ans.available ?? []);
+    const ifNeeded = !Array.isArray(ans) ? (ans.ifNeeded ?? []) : [];
     const parts = [`${avail.length} free`];
     if (ifNeeded.length > 0) parts.push(`${ifNeeded.length} if needed`);
     return parts.join(", ");
@@ -43,8 +47,11 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
   const [error, setError] = useState("");
 
   useEffect(
-    () => watchResponses(survey.id, setResponses, (err) => setError("Could not load answers: " + err.message)),
-    [survey.id]
+    () =>
+      watchResponses(survey.id, setResponses, (err) =>
+        setError("Could not load answers: " + err.message),
+      ),
+    [survey.id],
   );
 
   useEffect(() => {
@@ -64,12 +71,17 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
   }, [copied]);
 
   const isOpen = survey.status === "open";
-  const link = typeof window === "undefined" ? "/survey" : `${window.location.origin}/survey`;
+  const link =
+    typeof window === "undefined"
+      ? "/survey"
+      : `${window.location.origin}/survey`;
   const message = buildMessage(survey, link);
 
   // Filter down to targeted students if specific UIDs were selected
   const targetSet =
-    survey.targetStudentUids && survey.targetStudentUids.length > 0 ? new Set(survey.targetStudentUids) : null;
+    survey.targetStudentUids && survey.targetStudentUids.length > 0
+      ? new Set(survey.targetStudentUids)
+      : null;
   const students = allStudents
     ? targetSet
       ? allStudents.filter((s) => targetSet.has(s.uid))
@@ -78,9 +90,12 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
 
   const answeredCount = responses?.length ?? 0;
   const answeredIds = new Set((responses ?? []).map((r) => r.uid));
-  const waiting = students ? students.filter((s) => !answeredIds.has(s.uid)) : [];
+  const waiting = students
+    ? students.filter((s) => !answeredIds.has(s.uid))
+    : [];
   const total = students?.length ?? 0;
-  const percent = total > 0 ? Math.min(100, Math.round((answeredCount / total) * 100)) : 0;
+  const percent =
+    total > 0 ? Math.min(100, Math.round((answeredCount / total) * 100)) : 0;
 
   const questions = survey.questions || [];
 
@@ -103,15 +118,28 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
   }
 
   function handleDownload() {
-    if (responses) downloadCsv(csvFileName(survey.title), responsesToCsv(responses, questions));
+    if (responses)
+      downloadCsv(
+        csvFileName(survey.title),
+        responsesToCsv(responses, questions),
+      );
   }
 
   const footer = (
-    <ActionBar note={isOpen ? "You can reopen it later." : "Students can no longer answer."}>
+    <ActionBar
+      note={
+        isOpen ? "You can reopen it later." : "Students can no longer answer."
+      }
+    >
       <button type="button" className="sv-btn" onClick={onPreview}>
         Preview as student
       </button>
-      <button type="button" className="sv-btn" onClick={handleDownload} disabled={!responses}>
+      <button
+        type="button"
+        className="sv-btn"
+        onClick={handleDownload}
+        disabled={!responses}
+      >
         Download CSV
       </button>
 
@@ -119,7 +147,11 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
         Match groups
       </a>
 
-      <button type="button" className="sv-btn sv-btn-primary" onClick={toggleStatus}>
+      <button
+        type="button"
+        className="sv-btn sv-btn-primary"
+        onClick={toggleStatus}
+      >
         {isOpen ? "Close survey" : "Reopen survey"}
       </button>
     </ActionBar>
@@ -133,14 +165,19 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
           <h1 className="sv-title">
             {survey.title} is {isOpen ? "open" : "closed"}
           </h1>
-          <p className="sv-sub">Monday to Sunday, {formatRange(survey.startHour, survey.endHour)}</p>
+          <p className="sv-sub">
+            Monday to Sunday, {formatRange(survey.startHour, survey.endHour)}
+          </p>
         </div>
-        <span className={isOpen ? "sv-badge sv-badge-open" : "sv-badge"}>{isOpen ? "Open" : "Closed"}</span>
+        <span className={isOpen ? "sv-badge sv-badge-open" : "sv-badge"}>
+          {isOpen ? "Open" : "Closed"}
+        </span>
       </div>
 
       {justCreated && (
         <div className="sv-banner" role="status">
-          Survey created. Students can see it now. Use Preview as student to click through it.
+          Survey created. Students can see it now. Use Preview as student to
+          click through it.
         </div>
       )}
       {error && (
@@ -174,7 +211,6 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
       </div>
 
       <div className="sv-two-col">
-
         <div className="sv-card">
           <div className="sv-card-head">
             <h2 className="sv-h2">
@@ -183,15 +219,28 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
                 : "Still waiting on"}
             </h2>
             {students && waiting.length > 0 && (
-              <button type="button" className="sv-btn sv-btn-sm" onClick={() => setNamesHidden(!namesHidden)}>
+              <button
+                type="button"
+                className="sv-btn sv-btn-sm"
+                onClick={() => setNamesHidden(!namesHidden)}
+              >
                 {namesHidden ? "Show names" : "Hide names"}
               </button>
             )}
           </div>
-          <p className="sv-hint">Only you see this list. Students are never told who has or has not answered.</p>
-          {studentsFailed && <p className="sv-hint">Could not load the student list.</p>}
-          {!students && !studentsFailed && <p className="sv-hint">Loading...</p>}
-          {students && waiting.length === 0 && <p className="sv-hint">Everyone has answered.</p>}
+          <p className="sv-hint">
+            Only you see this list. Students are never told who has or has not
+            answered.
+          </p>
+          {studentsFailed && (
+            <p className="sv-hint">Could not load the student list.</p>
+          )}
+          {!students && !studentsFailed && (
+            <p className="sv-hint">Loading...</p>
+          )}
+          {students && waiting.length === 0 && (
+            <p className="sv-hint">Everyone has answered.</p>
+          )}
           {students && waiting.length > 0 && !namesHidden && (
             <ul className="sv-list">
               {waiting.map((student) => (
@@ -227,7 +276,9 @@ export default function SurveyDetail({ survey, justCreated, onPreview }) {
                   <tr key={r.uid}>
                     <td>{r.name || r.email}</td>
                     {questions.map((q) => (
-                      <td key={q.id}>{formatAnswerCell(q, r.answers?.[q.id])}</td>
+                      <td key={q.id}>
+                        {formatAnswerCell(q, r.answers?.[q.id])}
+                      </td>
                     ))}
                   </tr>
                 ))}

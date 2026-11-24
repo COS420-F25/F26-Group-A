@@ -1,5 +1,5 @@
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { db } from "./firebase";
+import { db } from "@authent/firebase";
 
 export const ROLES = ["student", "instructor"];
 
@@ -7,7 +7,10 @@ export const ROLES = ["student", "instructor"];
 // Instructors must send the instructor code. Firestore checks it
 // against config/instructor, so it cannot be skipped in the browser.
 // A role cannot be changed after it is saved.
-export async function createProfile(user, { role, displayName, instructorCode = "" }) {
+export async function createProfile(
+  user,
+  { role, displayName, instructorCode = "" },
+) {
   const data = {
     email: user.email ?? "",
     displayName: displayName ?? "",

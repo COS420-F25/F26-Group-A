@@ -1,7 +1,15 @@
 import { Fragment, useRef } from "react";
-import { DAYS, hourLabel, slotId } from "../utils/slots";
+import { DAYS, hourLabel, slotId } from "@utils/slots";
 
-export default function AvailabilityGrid({ startHour, endHour, value, ifNeededValue = new Set(), onChange, disabled = false, mode }) {
+export default function AvailabilityGrid({
+  startHour,
+  endHour,
+  value,
+  ifNeededValue = new Set(),
+  onChange,
+  disabled = false,
+  mode,
+}) {
   const latestVal = useRef(value);
   latestVal.current = value;
 
@@ -106,7 +114,10 @@ export default function AvailabilityGrid({ startHour, endHour, value, ifNeededVa
                   data-if-needed={isIfNeeded ? "true" : undefined}
                   style={
                     isIfNeeded
-                      ? { background: "var(--sv-surface)", border: "1px dashed var(--sv-accent)" }
+                      ? {
+                          background: "var(--sv-surface)",
+                          border: "1px dashed var(--sv-accent)",
+                        }
                       : undefined
                   }
                   aria-pressed={isAvailable || isIfNeeded}

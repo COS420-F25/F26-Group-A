@@ -1,29 +1,58 @@
 import { useEffect, useRef, useState } from "react";
-import AvailabilityGrid from "../content/AvailabilityGrid";
-import BlockListStep from "../content/BlockListStep";
-import { ActionBar, Page } from "./AppShell";
-import { getMyResponse, saveResponse } from "../utils/surveyService";
+import AvailabilityGrid from "@survey/AvailabilityGrid";
+import BlockListStep from "@groups/BlockListStep";
+import { ActionBar, Page } from "@utils/AppShell";
+import { getMyResponse, saveResponse } from "@survey/surveyService";
 
 const GENDER_OPTIONS = ["Woman", "Man", "Non-binary", "Prefer not to say"];
-const DEFAULT_INTERESTS = ["Math", "Programming", "Science", "Writing", "Engineering", "Design"];
+const DEFAULT_INTERESTS = [
+  "Math",
+  "Programming",
+  "Science",
+  "Writing",
+  "Engineering",
+  "Design",
+];
 
 function LockIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true">
-      <rect x="4" y="9" width="12" height="8" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M7 9V6.5a3 3 0 016 0V9" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <rect
+        x="4"
+        y="9"
+        width="12"
+        height="8"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M7 9V6.5a3 3 0 016 0V9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
     </svg>
   );
 }
 
-export default function SurveyFlow({ survey, user, profile, preview = false, onExit }) {
+export default function SurveyFlow({
+  survey,
+  user,
+  profile,
+  preview = false,
+  onExit,
+}) {
   const allQuestions = survey.questions || [];
 
   // Group and sort general questions so Gender & Interests appear together on Step 1 in order
-  const generalQuestions = [...allQuestions].sort((a, b) => {
-    const order = { gender: 1, interests: 2, text: 3, choice: 4 };
-    return (order[a.type] || 99) - (order[b.type] || 99);
-  }).filter((q) => q.type !== "availability" && q.type !== "blocklist");
+  const generalQuestions = [...allQuestions]
+    .sort((a, b) => {
+      const order = { gender: 1, interests: 2, text: 3, choice: 4 };
+      return (order[a.type] || 99) - (order[b.type] || 99);
+    })
+    .filter((q) => q.type !== "availability" && q.type !== "blocklist");
 
   const availabilityQ = allQuestions.find((q) => q.type === "availability");
   const blocklistQ = allQuestions.find((q) => q.type === "blocklist");
@@ -31,13 +60,25 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
   // Build ordered flow steps matching the student experience
   const STEPS = [];
   if (generalQuestions.length > 0) {
-    STEPS.push({ id: "general", label: "About You & Preferences", questions: generalQuestions });
+    STEPS.push({
+      id: "general",
+      label: "About You & Preferences",
+      questions: generalQuestions,
+    });
   }
   if (availabilityQ) {
-    STEPS.push({ id: "availability", label: availabilityQ.label || "Availability", q: availabilityQ });
+    STEPS.push({
+      id: "availability",
+      label: availabilityQ.label || "Availability",
+      q: availabilityQ,
+    });
   }
   if (blocklistQ) {
-    STEPS.push({ id: "blocklist", label: blocklistQ.label || "Block list", q: blocklistQ });
+    STEPS.push({
+      id: "blocklist",
+      label: blocklistQ.label || "Block list",
+      q: blocklistQ,
+    });
   }
   STEPS.push({ id: "review", label: "Review" });
 
@@ -71,7 +112,10 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
       })
       .catch((err) => {
         if (cancelled) return;
-        setNotice({ type: "error", text: "Could not load your earlier answers: " + err.message });
+        setNotice({
+          type: "error",
+          text: "Could not load your earlier answers: " + err.message,
+        });
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -143,7 +187,10 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
   function renderGeneralQuestion(q) {
     return (
       <div key={q.id} style={{ marginBottom: "1.75rem" }}>
-        <h3 className="sv-h2" style={{ fontSize: "1.05rem", marginBottom: "0.35rem" }}>
+        <h3
+          className="sv-h2"
+          style={{ fontSize: "1.05rem", marginBottom: "0.35rem" }}
+        >
           {q.label}
         </h3>
 
@@ -174,7 +221,9 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
 
         {q.type === "interests" && (
           <div>
-            <p className="sv-hint">Select your topics and interests below (click to toggle).</p>
+            <p className="sv-hint">
+              Select your topics and interests below (click to toggle).
+            </p>
             <div className="sv-chips" style={{ marginTop: "0.5rem" }}>
               {DEFAULT_INTERESTS.map((tag) => {
                 const currentSet = new Set(answers[q.id] || []);
@@ -243,7 +292,12 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
     );
   } else {
     primary = (
-      <button type="button" className="sv-btn sv-btn-primary" onClick={handleSubmit} disabled={saving}>
+      <button
+        type="button"
+        className="sv-btn sv-btn-primary"
+        onClick={handleSubmit}
+        disabled={saving}
+      >
         {saving ? "Saving..." : hadResponse ? "Save changes" : "Submit survey"}
       </button>
     );
@@ -251,7 +305,11 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
 
   const footer = (
     <ActionBar
-      note={preview ? "Preview only. Nothing here is saved." : "You can change your answers until the survey closes."}
+      note={
+        preview
+          ? "Preview only. Nothing here is saved."
+          : "You can change your answers until the survey closes."
+      }
     >
       {!(isReview && saved && !preview) && (
         <button type="button" className="sv-btn" onClick={goBack}>
@@ -282,16 +340,24 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
           <p className="sv-sub">About 2 minutes</p>
         </div>
         <p className="sv-step-count">
-          {isReview ? "Review" : `Step ${stepIndex + 1} of ${QUESTION_STEP_COUNT}`}
+          {isReview
+            ? "Review"
+            : `Step ${stepIndex + 1} of ${QUESTION_STEP_COUNT}`}
         </p>
       </div>
-      {survey.description && <p className="sv-sub" style={{ marginBottom: "1rem" }}>{survey.description}</p>}
+      {survey.description && (
+        <p className="sv-sub" style={{ marginBottom: "1rem" }}>
+          {survey.description}
+        </p>
+      )}
 
       <ol className="sv-steps" aria-label="Survey progress">
         {STEPS.map((s, i) => (
           <li
             key={s.id}
-            data-state={i < stepIndex ? "done" : i === stepIndex ? "current" : undefined}
+            data-state={
+              i < stepIndex ? "done" : i === stepIndex ? "current" : undefined
+            }
             aria-current={i === stepIndex ? "step" : undefined}
           >
             <span className="sv-sr-only">{s.label}</span>
@@ -301,7 +367,8 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
 
       {preview && (
         <div className="sv-banner" role="note">
-          Preview: this is what students see. Click through the steps. Nothing is saved.
+          Preview: this is what students see. Click through the steps. Nothing
+          is saved.
         </div>
       )}
       <div className="sv-banner">
@@ -309,7 +376,10 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
         Only your instructor sees your answers. Classmates never do.
       </div>
       {hadResponse && !saved && (
-        <p className="sv-hint">You already answered this survey. You can change your answers and save again.</p>
+        <p className="sv-hint">
+          You already answered this survey. You can change your answers and save
+          again.
+        </p>
       )}
 
       {loading ? (
@@ -318,7 +388,12 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
         <>
           {step?.id === "general" && (
             <section className="sv-card">
-              <h2 className="sv-h2" ref={headingRef} tabIndex={-1} style={{ marginBottom: "1rem" }}>
+              <h2
+                className="sv-h2"
+                ref={headingRef}
+                tabIndex={-1}
+                style={{ marginBottom: "1rem" }}
+              >
                 About You & Preferences
               </h2>
               {step.questions.map((q) => renderGeneralQuestion(q))}
@@ -330,7 +405,10 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
               <h2 className="sv-h2" ref={headingRef} tabIndex={-1}>
                 {step.q.label}
               </h2>
-              <p className="sv-hint">Paint standard available times (solid) or secondary if-needed times (dashed).</p>
+              <p className="sv-hint">
+                Paint standard available times (solid) or secondary if-needed
+                times (dashed).
+              </p>
               <div className="sv-toolbar">
                 <div className="sv-seg" role="group" aria-label="Calendar mode">
                   <button
@@ -361,7 +439,9 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
                 <button
                   type="button"
                   className="sv-link-btn"
-                  onClick={() => setAnswerFor(step.q.id, { available: [], ifNeeded: [] })}
+                  onClick={() =>
+                    setAnswerFor(step.q.id, { available: [], ifNeeded: [] })
+                  }
                 >
                   Clear all
                 </button>
@@ -369,17 +449,37 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
               <AvailabilityGrid
                 startHour={survey.startHour}
                 endHour={survey.endHour}
-                value={new Set(answers[step.q.id]?.available || (Array.isArray(answers[step.q.id]) ? answers[step.q.id] : []))}
+                value={
+                  new Set(
+                    answers[step.q.id]?.available ||
+                      (Array.isArray(answers[step.q.id])
+                        ? answers[step.q.id]
+                        : []),
+                  )
+                }
                 ifNeededValue={new Set(answers[step.q.id]?.ifNeeded || [])}
                 onChange={(nextAvail, nextIfNeeded) =>
-                  setAnswerFor(step.q.id, { available: [...nextAvail], ifNeeded: [...nextIfNeeded] })
+                  setAnswerFor(step.q.id, {
+                    available: [...nextAvail],
+                    ifNeeded: [...nextIfNeeded],
+                  })
                 }
                 mode={mode}
               />
               <div className="sv-legend">
-                <span><i className="sv-swatch sv-swatch-on" /> Available</span>
-                <span><i className="sv-swatch" style={{ border: "2px dashed var(--sv-accent)" }} /> If Needed</span>
-                <span><i className="sv-swatch" /> Not available</span>
+                <span>
+                  <i className="sv-swatch sv-swatch-on" /> Available
+                </span>
+                <span>
+                  <i
+                    className="sv-swatch"
+                    style={{ border: "2px dashed var(--sv-accent)" }}
+                  />{" "}
+                  If Needed
+                </span>
+                <span>
+                  <i className="sv-swatch" /> Not available
+                </span>
               </div>
             </section>
           )}
@@ -397,7 +497,8 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
                 let displayVal = "No answer given";
 
                 if (q.type === "availability") {
-                  const availSlots = ans?.available || (Array.isArray(ans) ? ans : []);
+                  const availSlots =
+                    ans?.available || (Array.isArray(ans) ? ans : []);
                   const neededSlots = ans?.ifNeeded || [];
                   displayVal = (
                     <div>
@@ -409,9 +510,21 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
                         onChange={() => {}}
                         disabled={true}
                       />
-                      <div className="sv-legend" style={{ marginTop: "0.5rem" }}>
-                        <span><i className="sv-swatch sv-swatch-on" /> Available ({availSlots.length})</span>
-                        <span><i className="sv-swatch" style={{ border: "2px dashed var(--sv-accent)" }} /> If Needed ({neededSlots.length})</span>
+                      <div
+                        className="sv-legend"
+                        style={{ marginTop: "0.5rem" }}
+                      >
+                        <span>
+                          <i className="sv-swatch sv-swatch-on" /> Available (
+                          {availSlots.length})
+                        </span>
+                        <span>
+                          <i
+                            className="sv-swatch"
+                            style={{ border: "2px dashed var(--sv-accent)" }}
+                          />{" "}
+                          If Needed ({neededSlots.length})
+                        </span>
                       </div>
                     </div>
                   );
@@ -427,7 +540,11 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
                       <h3 className="sv-review-title">{q.label}</h3>
                       <div className="sv-review-list">{displayVal}</div>
                     </div>
-                    <button type="button" className="sv-link-btn" onClick={() => jumpToStepById(stepId)}>
+                    <button
+                      type="button"
+                      className="sv-link-btn"
+                      onClick={() => jumpToStepById(stepId)}
+                    >
                       Edit<span className="sv-sr-only"> {q.label}</span>
                     </button>
                   </div>
@@ -437,7 +554,10 @@ export default function SurveyFlow({ survey, user, profile, preview = false, onE
           )}
 
           {notice && (
-            <p className={notice.type === "error" ? "sv-error" : "sv-success"} role={notice.type === "error" ? "alert" : "status"}>
+            <p
+              className={notice.type === "error" ? "sv-error" : "sv-success"}
+              role={notice.type === "error" ? "alert" : "status"}
+            >
               {notice.text}
             </p>
           )}

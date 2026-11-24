@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
-import { auth, db } from "./firebase";
+import { auth, db } from "@authent/firebase";
 
 // Gives a component the signed-in user and their saved profile.
 //   user     the Firebase user, or null when signed out
@@ -28,9 +28,11 @@ export function useUserProfile() {
             ? {
                 ...prev,
                 loading: false,
-                error: new Error("Timed out connecting to authentication service."),
+                error: new Error(
+                  "Timed out connecting to authentication service.",
+                ),
               }
-            : prev
+            : prev,
         );
       }
     }, 8000);
@@ -63,7 +65,7 @@ export function useUserProfile() {
           (error) => {
             console.error(error);
             setState({ user, profile: null, loading: false, error });
-          }
+          },
         );
       },
       (error) => {
@@ -71,7 +73,7 @@ export function useUserProfile() {
         clearTimeout(fallbackTimer);
         console.error(error);
         setState({ user: null, profile: null, loading: false, error });
-      }
+      },
     );
 
     return () => {

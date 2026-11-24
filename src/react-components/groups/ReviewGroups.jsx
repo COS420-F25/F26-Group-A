@@ -14,16 +14,29 @@ import {
   STRATEGIES,
   unplacedReason,
   studentsFromSurvey,
-} from "../utils/groupRounds";
-import { initialState, roundReducer } from "../utils/groupRoundReducer";
-import PublishGroupDialog from "../PublishGroupDialog";
-import Breadcrumb from "../structure/Breadcrumb";
-import { Page } from "../structure/AppShell";
+} from "@groups/groupRounds";
+import { initialState, roundReducer } from "@groups/groupRoundReducer";
+import PublishGroupDialog from "@groups/PublishGroupDialog";
+import Breadcrumb from "@utils/Breadcrumb";
+import { Page } from "@utils/AppShell";
 
 const LIFECYCLE = ["Set up", "Collect responses", "Match", "Review", "Publish"];
 
-export default function ReviewGroups({ user, surveyId, service, strategy = "byScheduleAndInterests" }) {
-  const { getSurvey, getStudents, getResponses, getLatestRound, saveRound, publishRound, askForHours } = service;
+export default function ReviewGroups({
+  user,
+  surveyId,
+  service,
+  strategy = "byScheduleAndInterests",
+}) {
+  const {
+    getSurvey,
+    getStudents,
+    getResponses,
+    getLatestRound,
+    saveRound,
+    publishRound,
+    askForHours,
+  } = service;
   const [state, dispatch] = useReducer(roundReducer, initialState);
   const [students, setStudents] = useState(null); // null while loading
   const [loadError, setLoadError] = useState("");
@@ -36,7 +49,9 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
   const needsSave = useRef(false);
 
   const round = state.round;
-  const matchOptions = { strategy: STRATEGIES[strategy] ?? STRATEGIES.bySchedule };
+  const matchOptions = {
+    strategy: STRATEGIES[strategy] ?? STRATEGIES.bySchedule,
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -72,7 +87,8 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
           needsSave.current = true;
         }
       } catch (err) {
-        if (!cancelled) setLoadError("Could not load this survey: " + err.message);
+        if (!cancelled)
+          setLoadError("Could not load this survey: " + err.message);
       }
     }
     load();
@@ -94,7 +110,7 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
 
   const byId = useMemo(
     () => Object.fromEntries((students ?? []).map((s) => [s.uid, s])),
-    [students]
+    [students],
   );
 
   if (loadError) {
@@ -115,19 +131,27 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
   }
 
   const published = round.status === "published";
-  const groupsToPublish = round.groups.filter((group) => group.memberIds.length > 0);
-  const publishChecks = showPublishDialog ? getPublishWarnings(groupsToPublish, byId) : null;
+  const groupsToPublish = round.groups.filter(
+    (group) => group.memberIds.length > 0,
+  );
+  const publishChecks = showPublishDialog
+    ? getPublishWarnings(groupsToPublish, byId)
+    : null;
   const unplacedStudents = publishChecks
     ? round.unplaced.flatMap(({ uid }) => {
-      const student = byId[uid];
-      if (!student) return [];
-      const best = previewMove(student, round.groups, byId).find((option) => option.bestFit);
-      return [{
-        uid,
-        name: student.name,
-        reason: describeUnplacedStudent(student, best),
-      }];
-    })
+        const student = byId[uid];
+        if (!student) return [];
+        const best = previewMove(student, round.groups, byId).find(
+          (option) => option.bestFit,
+        );
+        return [
+          {
+            uid,
+            name: student.name,
+            reason: describeUnplacedStudent(student, best),
+          },
+        ];
+      })
     : [];
 
   function change(action) {
@@ -139,7 +163,9 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
   }
 
   function rematch() {
-    const active = students.filter((s) => !(round.removed ?? []).includes(s.uid));
+    const active = students.filter(
+      (s) => !(round.removed ?? []).includes(s.uid),
+    );
     const { groups, unplaced } = matchGroups(active, matchOptions);
     change({ type: "rematch", groups, unplaced });
   }
@@ -150,7 +176,11 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
     try {
       await askForHours(surveyId, uid);
       needsSave.current = true;
-      dispatch({ type: "askedForHours", uid, askedAt: new Date().toISOString() });
+      dispatch({
+        type: "askedForHours",
+        uid,
+        askedAt: new Date().toISOString(),
+      });
       setNotice(`Asked ${byId[uid]?.name ?? "the student"} to add hours.`);
     } catch (err) {
       setError("Could not send the request: " + err.message);
@@ -167,7 +197,9 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
       const left = round.unplaced.length;
       setNotice(
         "Groups published. Each student can now see their own group." +
-          (left > 0 ? ` ${left} ${left === 1 ? "student still needs" : "students still need"} a group.` : "")
+          (left > 0
+            ? ` ${left} ${left === 1 ? "student still needs" : "students still need"} a group.`
+            : ""),
       );
     } catch (err) {
       setError("Could not publish: " + err.message);
@@ -176,20 +208,36 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
     }
   }
 
-  const summary = roundSummary(round, students.length - (round.removed ?? []).length);
+  const summary = roundSummary(
+    round,
+    students.length - (round.removed ?? []).length,
+  );
   const menuProps = (student) => ({
     student,
     options: previewMove(student, round.groups, byId),
-    onMove: (groupId) => change({ type: "move", uid: student.uid, toGroupId: groupId, name: student.name }),
+    onMove: (groupId) =>
+      change({
+        type: "move",
+        uid: student.uid,
+        toGroupId: groupId,
+        name: student.name,
+      }),
     onAsk: () => handleAsk(student.uid),
-    onRemove: () => change({ type: "remove", uid: student.uid, name: student.name }),
+    onRemove: () =>
+      change({ type: "remove", uid: student.uid, name: student.name }),
     onClose: () => setMenuFor(null),
   });
 
   return (
     <Page>
-      <Breadcrumb steps={LIFECYCLE} current={published ? 4 : 3} label="Survey progress" />
-      <h1 className="sv-title">Review proposed groups &middot; Round {round.roundNumber}</h1>
+      <Breadcrumb
+        steps={LIFECYCLE}
+        current={published ? 4 : 3}
+        label="Survey progress"
+      />
+      <h1 className="sv-title">
+        Review proposed groups &middot; Round {round.roundNumber}
+      </h1>
 
       <SummaryBar
         summary={summary}
@@ -200,10 +248,18 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
 
       <div className="sv-toolbar" style={{ marginTop: 16 }}>
         <div style={s.row}>
-          <button className="sv-btn sv-btn-sm" onClick={rematch} disabled={published}>
+          <button
+            className="sv-btn sv-btn-sm"
+            onClick={rematch}
+            disabled={published}
+          >
             Run matching again
           </button>
-          <button className="sv-btn sv-btn-sm" onClick={() => change({ type: "addGroup" })} disabled={published}>
+          <button
+            className="sv-btn sv-btn-sm"
+            onClick={() => change({ type: "addGroup" })}
+            disabled={published}
+          >
             + Add group
           </button>
         </div>
@@ -214,9 +270,15 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
             setMenuFor(null);
             setShowPublishDialog(true);
           }}
-          disabled={published || saving || publishing || groupsToPublish.length === 0}
+          disabled={
+            published || saving || publishing || groupsToPublish.length === 0
+          }
         >
-          {published ? "Published" : publishing ? "Publishing..." : "Continue to publish"}
+          {published
+            ? "Published"
+            : publishing
+              ? "Publishing..."
+              : "Continue to publish"}
         </button>
       </div>
 
@@ -238,7 +300,9 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
             menuFor={menuFor}
             onOpenMenu={setMenuFor}
             menuProps={menuProps}
-            onToggleReviewed={() => change({ type: "toggleReviewed", groupId: group.id })}
+            onToggleReviewed={() =>
+              change({ type: "toggleReviewed", groupId: group.id })
+            }
           />
         ))}
 
@@ -252,7 +316,12 @@ export default function ReviewGroups({ user, surveyId, service, strategy = "bySc
             onOpenMenu={setMenuFor}
             menuProps={menuProps}
             onPlace={(student, groupId) =>
-              change({ type: "move", uid: student.uid, toGroupId: groupId, name: student.name })
+              change({
+                type: "move",
+                uid: student.uid,
+                toGroupId: groupId,
+                name: student.name,
+              })
             }
           />
         )}
@@ -285,19 +354,28 @@ function SummaryBar({ summary, lastChange, canUndo, onUndo }) {
   return (
     <div style={s.summary} role="status">
       <span>
-        <strong>{placed} of {total}</strong> students placed
+        <strong>
+          {placed} of {total}
+        </strong>{" "}
+        students placed
       </span>
       {needGroup > 0 && (
         <span style={{ color: s.warn }}>
-          {needGroup} {needGroup === 1 ? "student needs" : "students need"} a group
+          {needGroup} {needGroup === 1 ? "student needs" : "students need"} a
+          group
         </span>
       )}
       <span>
-        <strong>{reviewed} of {groupCount}</strong> groups reviewed
+        <strong>
+          {reviewed} of {groupCount}
+        </strong>{" "}
+        groups reviewed
       </span>
       <span style={{ ...s.row, gap: 6 }}>
-        <TimeChip time={{ slot: "Mon-18", ifNeeded: false }} label="Time" /> everyone free
-        <TimeChip time={{ slot: "Mon-18", ifNeeded: true }} label="Time" /> someone marked &ldquo;if needed&rdquo;
+        <TimeChip time={{ slot: "Mon-18", ifNeeded: false }} label="Time" />{" "}
+        everyone free
+        <TimeChip time={{ slot: "Mon-18", ifNeeded: true }} label="Time" />{" "}
+        someone marked &ldquo;if needed&rdquo;
       </span>
       {lastChange && (
         <span style={{ marginLeft: "auto", color: color.subtext }}>
@@ -313,7 +391,15 @@ function SummaryBar({ summary, lastChange, canUndo, onUndo }) {
   );
 }
 
-function GroupCard({ group, members, locked, menuFor, onOpenMenu, menuProps, onToggleReviewed }) {
+function GroupCard({
+  group,
+  members,
+  locked,
+  menuFor,
+  onOpenMenu,
+  menuProps,
+  onToggleReviewed,
+}) {
   const shared = sharedTimes(members);
   const belowRule = members.length > 1 && shared.length < MIN_SHARED_TIMES;
 
@@ -322,7 +408,12 @@ function GroupCard({ group, members, locked, menuFor, onOpenMenu, menuProps, onT
       <div style={{ ...s.spread, alignItems: "center", marginBottom: 8 }}>
         <h2 style={{ ...s.subheading, margin: 0 }}>{group.name}</h2>
         {group.reviewed ? (
-          <button style={s.reviewedBadge} onClick={onToggleReviewed} disabled={locked} title="Click to unmark">
+          <button
+            style={s.reviewedBadge}
+            onClick={onToggleReviewed}
+            disabled={locked}
+            title="Click to unmark"
+          >
             ✓ Reviewed
           </button>
         ) : (
@@ -333,13 +424,20 @@ function GroupCard({ group, members, locked, menuFor, onOpenMenu, menuProps, onT
       </div>
 
       {members.length === 0 && (
-        <p className="sv-hint">No members yet. Use Move… on a student to add them here.</p>
+        <p className="sv-hint">
+          No members yet. Use Move… on a student to add them here.
+        </p>
       )}
 
       <ul style={s.list}>
         {members.map((m) => (
           <li key={m.uid} style={{ position: "relative" }}>
-            <div style={{ ...s.memberRow, ...(menuFor === m.uid ? s.memberRowActive : null) }}>
+            <div
+              style={{
+                ...s.memberRow,
+                ...(menuFor === m.uid ? s.memberRowActive : null),
+              }}
+            >
               <span>{m.name}</span>
               {!locked && (
                 <button
@@ -361,9 +459,15 @@ function GroupCard({ group, members, locked, menuFor, onOpenMenu, menuProps, onT
       {members.length > 0 && (
         <>
           <p style={{ ...s.muted, margin: "10px 0 6px", fontSize: 12 }}>
-            {members.length} {members.length === 1 ? "member" : "members"} &middot; {shared.length} shared{" "}
+            {members.length} {members.length === 1 ? "member" : "members"}{" "}
+            &middot; {shared.length} shared{" "}
             {shared.length === 1 ? "time" : "times"}
-            {belowRule && <span style={{ color: s.warn }}> &middot; below the {MIN_SHARED_TIMES}-time rule</span>}
+            {belowRule && (
+              <span style={{ color: s.warn }}>
+                {" "}
+                &middot; below the {MIN_SHARED_TIMES}-time rule
+              </span>
+            )}
           </p>
           <TimeChips times={shared} />
         </>
@@ -372,24 +476,43 @@ function GroupCard({ group, members, locked, menuFor, onOpenMenu, menuProps, onT
   );
 }
 
-function NeedsGroupPanel({ unplaced, byId, groups, locked, menuFor, onOpenMenu, menuProps, onPlace }) {
+function NeedsGroupPanel({
+  unplaced,
+  byId,
+  groups,
+  locked,
+  menuFor,
+  onOpenMenu,
+  menuProps,
+  onPlace,
+}) {
   return (
     <section style={s.needsPanel} aria-label="Needs a group">
-      <h2 style={{ ...s.subheading, margin: 0, color: s.warn }}>Needs a group ({unplaced.length})</h2>
-      <p style={{ ...s.muted, fontSize: 12, margin: "2px 0 10px" }}>Only you see this list.</p>
+      <h2 style={{ ...s.subheading, margin: 0, color: s.warn }}>
+        Needs a group ({unplaced.length})
+      </h2>
+      <p style={{ ...s.muted, fontSize: 12, margin: "2px 0 10px" }}>
+        Only you see this list.
+      </p>
 
       {unplaced.map((entry) => {
         const student = byId[entry.uid];
         if (!student) return null;
         const best = previewMove(student, groups, byId).find((o) => o.bestFit);
         return (
-          <div key={entry.uid} style={{ ...s.card, position: "relative", marginBottom: 10 }}>
+          <div
+            key={entry.uid}
+            style={{ ...s.card, position: "relative", marginBottom: 10 }}
+          >
             <strong>{student.name}</strong>
             <NeedsGroupDetails entry={entry} student={student} best={best} />
             {!locked && (
               <div style={{ ...s.row, marginTop: 8 }}>
                 {best && (
-                  <button className="sv-btn sv-btn-sm sv-btn-primary" onClick={() => onPlace(student, best.groupId)}>
+                  <button
+                    className="sv-btn sv-btn-sm sv-btn-primary"
+                    onClick={() => onPlace(student, best.groupId)}
+                  >
                     Place in {best.name}
                   </button>
                 )}
@@ -398,7 +521,9 @@ function NeedsGroupPanel({ unplaced, byId, groups, locked, menuFor, onOpenMenu, 
                   aria-haspopup="menu"
                   aria-expanded={menuFor === student.uid}
                   aria-label={`Place ${student.name} in a group`}
-                  onClick={() => onOpenMenu(menuFor === student.uid ? null : student.uid)}
+                  onClick={() =>
+                    onOpenMenu(menuFor === student.uid ? null : student.uid)
+                  }
                 >
                   Place in group…
                 </button>
@@ -409,8 +534,16 @@ function NeedsGroupPanel({ unplaced, byId, groups, locked, menuFor, onOpenMenu, 
         );
       })}
 
-      <p style={{ ...s.muted, fontSize: 12, borderTop: `1px solid ${color.border}`, paddingTop: 8 }}>
-        Requests for hours name no group and no classmate. Students only see &ldquo;{HOUR_REQUEST_MESSAGE}&rdquo;
+      <p
+        style={{
+          ...s.muted,
+          fontSize: 12,
+          borderTop: `1px solid ${color.border}`,
+          paddingTop: 8,
+        }}
+      >
+        Requests for hours name no group and no classmate. Students only see
+        &ldquo;{HOUR_REQUEST_MESSAGE}&rdquo;
       </p>
     </section>
   );
@@ -419,19 +552,37 @@ function NeedsGroupPanel({ unplaced, byId, groups, locked, menuFor, onOpenMenu, 
 function NeedsGroupDetails({ entry, student, best }) {
   const lines = [];
   if (entry.askedAt) {
-    lines.push(<li key="asked">🕒 Asked for hours &middot; {formatDay(entry.askedAt)}</li>);
-    const answeredAfter = student.updatedAt && toMillis(student.updatedAt) > toMillis(entry.askedAt);
+    lines.push(
+      <li key="asked">
+        🕒 Asked for hours &middot; {formatDay(entry.askedAt)}
+      </li>,
+    );
+    const answeredAfter =
+      student.updatedAt &&
+      toMillis(student.updatedAt) > toMillis(entry.askedAt);
     if (answeredAfter && student.ifNeeded.length > 0) {
       lines.push(
         <li key="added" style={{ color: color.success }}>
-          ✓ Added {student.ifNeeded.length} &ldquo;if needed&rdquo; {student.ifNeeded.length === 1 ? "hour" : "hours"}
-        </li>
+          ✓ Added {student.ifNeeded.length} &ldquo;if needed&rdquo;{" "}
+          {student.ifNeeded.length === 1 ? "hour" : "hours"}
+        </li>,
       );
     }
   }
   return (
     <>
-      {lines.length > 0 && <ul style={{ ...s.list, fontSize: 12, color: color.subtext, margin: "4px 0" }}>{lines}</ul>}
+      {lines.length > 0 && (
+        <ul
+          style={{
+            ...s.list,
+            fontSize: 12,
+            color: color.subtext,
+            margin: "4px 0",
+          }}
+        >
+          {lines}
+        </ul>
+      )}
       <p style={{ fontSize: 13, margin: "4px 0 0" }}>
         {describeUnplacedStudent(student, best)}
       </p>
@@ -440,7 +591,9 @@ function NeedsGroupDetails({ entry, student, best }) {
 }
 
 function describeUnplacedStudent(student, best) {
-  return best ? `Shares ${joinTimes(best.shared)} with ${best.name}.` : unplacedReason(student);
+  return best
+    ? `Shares ${joinTimes(best.shared)} with ${best.name}.`
+    : unplacedReason(student);
 }
 
 function MoveMenu({ student, options, onMove, onAsk, onRemove, onClose }) {
@@ -449,7 +602,12 @@ function MoveMenu({ student, options, onMove, onAsk, onRemove, onClose }) {
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     const onClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target) && !e.target.closest?.("[aria-haspopup]")) onClose();
+      if (
+        ref.current &&
+        !ref.current.contains(e.target) &&
+        !e.target.closest?.("[aria-haspopup]")
+      )
+        onClose();
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("mousedown", onClick);
@@ -460,23 +618,45 @@ function MoveMenu({ student, options, onMove, onAsk, onRemove, onClose }) {
   }, [onClose]);
 
   return (
-    <div ref={ref} role="menu" aria-label={`Move ${student.name} to`} style={s.menu}>
+    <div
+      ref={ref}
+      role="menu"
+      aria-label={`Move ${student.name} to`}
+      style={s.menu}
+    >
       <p style={{ fontWeight: 600, margin: 0 }}>Move {student.name} to…</p>
       <p style={{ ...s.muted, fontSize: 12, margin: "2px 0 8px" }}>
         Each group shows what the move does to its shared meeting times.
       </p>
 
-      {options.length === 0 && <p className="sv-hint">There are no other groups. Add a group first.</p>}
+      {options.length === 0 && (
+        <p className="sv-hint">There are no other groups. Add a group first.</p>
+      )}
 
       {options.map((o) => (
-        <MoveOption key={o.groupId} option={o} student={student} onMove={onMove} />
+        <MoveOption
+          key={o.groupId}
+          option={o}
+          student={student}
+          onMove={onMove}
+        />
       ))}
 
-      <div style={{ borderTop: `1px solid ${color.border}`, marginTop: 8, paddingTop: 8 }}>
+      <div
+        style={{
+          borderTop: `1px solid ${color.border}`,
+          marginTop: 8,
+          paddingTop: 8,
+        }}
+      >
         <button role="menuitem" style={s.menuAction} onClick={onAsk}>
           🕒 Ask {student.name} to add hours
         </button>
-        <button role="menuitem" style={{ ...s.menuAction, color: color.danger }} onClick={onRemove}>
+        <button
+          role="menuitem"
+          style={{ ...s.menuAction, color: color.danger }}
+          onClick={onRemove}
+        >
           ✕ Remove from this round
         </button>
       </div>
@@ -485,7 +665,16 @@ function MoveMenu({ student, options, onMove, onAsk, onRemove, onClose }) {
 }
 
 function MoveOption({ option, student, onMove }) {
-  const { name, status, shared, sharedBefore, sizeAfter, overMax, conflictWith, bestFit } = option;
+  const {
+    name,
+    status,
+    shared,
+    sharedBefore,
+    sizeAfter,
+    overMax,
+    conflictWith,
+    bestFit,
+  } = option;
   const count = `${shared.length} shared ${shared.length === 1 ? "time" : "times"}`;
   const times = shared.length > 0 ? ` (${joinTimes(shared, ", ")})` : "";
 
@@ -508,15 +697,24 @@ function MoveOption({ option, student, onMove }) {
     detail = (
       <span>
         <strong style={{ color: color.success }}>
-          {sharedBefore !== null && shared.length < sharedBefore ? "Drops to" : "Keeps"} {count}
+          {sharedBefore !== null && shared.length < sharedBefore
+            ? "Drops to"
+            : "Keeps"}{" "}
+          {count}
         </strong>
         {times} &middot; {name} goes to {sizeAfter}
-        {overMax && <span style={{ color: s.warn }}> (over the {MAX_GROUP_SIZE}-person limit)</span>}
+        {overMax && (
+          <span style={{ color: s.warn }}>
+            {" "}
+            (over the {MAX_GROUP_SIZE}-person limit)
+          </span>
+        )}
       </span>
     );
   }
 
-  const bg = status === "conflict" ? s.conflictBg : bestFit ? s.bestBg : "transparent";
+  const bg =
+    status === "conflict" ? s.conflictBg : bestFit ? s.bestBg : "transparent";
   return (
     <div style={{ ...s.option, background: bg }}>
       <div style={{ fontSize: 13 }}>
@@ -535,7 +733,9 @@ function MoveOption({ option, student, onMove }) {
         <button
           role="menuitem"
           aria-label={`Move to ${name}`}
-          className={bestFit ? "sv-btn sv-btn-sm sv-btn-primary" : "sv-btn sv-btn-sm"}
+          className={
+            bestFit ? "sv-btn sv-btn-sm sv-btn-primary" : "sv-btn sv-btn-sm"
+          }
           onClick={() => onMove(option.groupId)}
         >
           Move
@@ -548,14 +748,19 @@ function MoveOption({ option, student, onMove }) {
 const MAX_CHIPS = 4;
 
 function TimeChips({ times }) {
-  if (times.length === 0) return <p style={{ ...s.muted, fontSize: 12, margin: 0 }}>No shared times.</p>;
+  if (times.length === 0)
+    return (
+      <p style={{ ...s.muted, fontSize: 12, margin: 0 }}>No shared times.</p>
+    );
   const shown = times.slice(0, MAX_CHIPS);
   return (
     <div style={{ ...s.row, gap: 6 }}>
       {shown.map((t) => (
         <TimeChip key={t.slot} time={t} />
       ))}
-      {times.length > MAX_CHIPS && <span style={{ fontSize: 12 }}>+{times.length - MAX_CHIPS} more</span>}
+      {times.length > MAX_CHIPS && (
+        <span style={{ fontSize: 12 }}>+{times.length - MAX_CHIPS} more</span>
+      )}
     </div>
   );
 }
@@ -565,7 +770,11 @@ function TimeChip({ time, label }) {
   return (
     <span
       style={{ ...s.chip, borderStyle: time.ifNeeded ? "dashed" : "solid" }}
-      title={time.ifNeeded ? "Someone marked this time \"if needed\"" : "Everyone is free"}
+      title={
+        time.ifNeeded
+          ? 'Someone marked this time "if needed"'
+          : "Everyone is free"
+      }
     >
       {label ?? slotLabel(time.slot)}
     </span>
@@ -587,7 +796,11 @@ function toMillis(value) {
 }
 
 function formatDay(value) {
-  return new Date(toMillis(value)).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return new Date(toMillis(value)).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 const color = {
@@ -609,7 +822,12 @@ const s = {
   bestBg: color.accentSoft,
   conflictBg: "color-mix(in srgb, var(--danger) 12%, transparent)",
   row: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 },
-  spread: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
+  spread: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+  },
   subheading: { fontSize: "1rem", fontWeight: 700, margin: "0 0 4px" },
   muted: { color: color.subtext, fontSize: "0.875rem", margin: "0 0 12px" },
   summary: {
@@ -651,7 +869,10 @@ const s = {
     borderRadius: 6,
     fontSize: 14,
   },
-  memberRowActive: { background: color.surfaceHover, outline: `1px solid ${color.accent}` },
+  memberRowActive: {
+    background: color.surfaceHover,
+    outline: `1px solid ${color.accent}`,
+  },
   link: {
     background: "none",
     border: "none",

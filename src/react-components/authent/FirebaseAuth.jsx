@@ -6,12 +6,12 @@ import {
   GoogleAuthProvider,
   updateProfile,
 } from "firebase/auth";
-import { auth } from "./firebase";
-import { useUserProfile } from "./useUserProfile";
-import { createProfile } from "./accounts";
+import { auth } from "@authent/firebase";
+import { useUserProfile } from "@authent/useUserProfile";
+import { createProfile } from "@authent/accounts";
 
-import { friendlyError } from "./authErrors.js";
-import { signOutAndGoHome } from "./signOutAndGoHome.js";
+import { friendlyError } from "@authent/authErrors.js";
+import { signOutAndGoHome } from "@authent/signOutAndGoHome.js";
 
 function RoleFields({ role, setRole, code, setCode }) {
   return (
@@ -80,7 +80,11 @@ export default function FirbaseAuth({ compact = false }) {
     setBusy(true);
     try {
       if (isSignUp) {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const cred = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password,
+        );
         await updateProfile(cred.user, { displayName: name.trim() });
         await createProfile(cred.user, {
           role,
@@ -137,8 +141,17 @@ export default function FirbaseAuth({ compact = false }) {
       <div className="sv-stack">
         <h3 className="sv-auth-title">Finish setting up</h3>
         <form onSubmit={handleFinish} className="sv-auth-form">
-          <RoleFields role={role} setRole={setRole} code={code} setCode={setCode} />
-          <button type="submit" className="sv-btn sv-btn-primary sv-btn-sm" disabled={busy}>
+          <RoleFields
+            role={role}
+            setRole={setRole}
+            code={code}
+            setCode={setCode}
+          />
+          <button
+            type="submit"
+            className="sv-btn sv-btn-primary sv-btn-sm"
+            disabled={busy}
+          >
             {busy ? "Saving..." : "Continue"}
           </button>
         </form>
@@ -169,7 +182,8 @@ export default function FirbaseAuth({ compact = false }) {
 
   // Logged in view with a profile
   if (user && profile) {
-    const displayName = profile.displayName || user.displayName || user.email || "Account";
+    const displayName =
+      profile.displayName || user.displayName || user.email || "Account";
     const initials = displayName.charAt(0).toUpperCase();
 
     if (compact) {
@@ -214,9 +228,14 @@ export default function FirbaseAuth({ compact = false }) {
     return (
       <div className="sv-auth-box">
         <p>
-          Signed in as {displayName} <span className="sv-badge">{profile.role}</span>
+          Signed in as {displayName}{" "}
+          <span className="sv-badge">{profile.role}</span>
         </p>
-        <button type="button" className="sv-btn sv-btn-sm sv-btn-block" onClick={signOutAndGoHome}>
+        <button
+          type="button"
+          className="sv-btn sv-btn-sm sv-btn-block"
+          onClick={signOutAndGoHome}
+        >
           Sign out
         </button>
       </div>
@@ -226,7 +245,9 @@ export default function FirbaseAuth({ compact = false }) {
   // Logged out form content
   const form = (
     <div className="sv-stack">
-      <h3 className="sv-auth-title">{isSignUp ? "Create account" : "Sign in"}</h3>
+      <h3 className="sv-auth-title">
+        {isSignUp ? "Create account" : "Sign in"}
+      </h3>
 
       <form onSubmit={handleSubmit} className="sv-auth-form">
         {isSignUp && (
@@ -256,14 +277,27 @@ export default function FirbaseAuth({ compact = false }) {
           className="sv-input sv-input-sm"
         />
         {isSignUp && (
-          <RoleFields role={role} setRole={setRole} code={code} setCode={setCode} />
+          <RoleFields
+            role={role}
+            setRole={setRole}
+            code={code}
+            setCode={setCode}
+          />
         )}
-        <button type="submit" className="sv-btn sv-btn-primary sv-btn-sm" disabled={busy}>
+        <button
+          type="submit"
+          className="sv-btn sv-btn-primary sv-btn-sm"
+          disabled={busy}
+        >
           {busy ? "Loading..." : isSignUp ? "Create account" : "Sign in"}
         </button>
       </form>
 
-      <button type="button" className="sv-btn sv-btn-sm sv-btn-block" onClick={handleGoogle}>
+      <button
+        type="button"
+        className="sv-btn sv-btn-sm sv-btn-block"
+        onClick={handleGoogle}
+      >
         Continue with Google
       </button>
 
@@ -271,7 +305,11 @@ export default function FirbaseAuth({ compact = false }) {
 
       <p className="sv-hint" style={{ margin: 0 }}>
         {isSignUp ? "Already have an account?" : "Need an account?"}{" "}
-        <button type="button" className="sv-link" onClick={() => setIsSignUp(!isSignUp)}>
+        <button
+          type="button"
+          className="sv-link"
+          onClick={() => setIsSignUp(!isSignUp)}
+        >
           {isSignUp ? "Sign in" : "Create one"}
         </button>
       </p>
@@ -282,10 +320,16 @@ export default function FirbaseAuth({ compact = false }) {
   if (compact) {
     return (
       <div className="sv-auth-links">
-        <a href="/signup" className="sv-btn sv-btn-primary sv-btn-sm sv-btn-block">
+        <a
+          href="/signup"
+          className="sv-btn sv-btn-primary sv-btn-sm sv-btn-block"
+        >
           Sign up
         </a>
-        <a href="/signin" className="sv-btn sv-btn-outline sv-btn-sm sv-btn-block">
+        <a
+          href="/signin"
+          className="sv-btn sv-btn-outline sv-btn-sm sv-btn-block"
+        >
           Sign in
         </a>
       </div>

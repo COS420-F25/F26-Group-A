@@ -1,4 +1,4 @@
-import { DAYS, hourLabel, sortSlots } from "./slots";
+import { DAYS, hourLabel, sortSlots } from "@utils/slots";
 
 export const HOUR_REQUEST_MESSAGE = "Can you add an hour or two?";
 
@@ -12,16 +12,25 @@ export function slotLabel(slot) {
 }
 
 function freeSlots(student) {
-  return new Set([...(student.availability ?? []), ...(student.ifNeeded ?? [])]);
+  return new Set([
+    ...(student.availability ?? []),
+    ...(student.ifNeeded ?? []),
+  ]);
 }
 
 export function sharedTimes(members) {
   if (members.length === 0) return [];
   const [first, ...rest] = members.map(freeSlots);
-  const common = [...first].filter((slot) => rest.every((set) => set.has(slot)));
+  const common = [...first].filter((slot) =>
+    rest.every((set) => set.has(slot)),
+  );
   return sortSlots(common).map((slot) => ({
     slot,
-    ifNeeded: members.some((m) => (m.ifNeeded ?? []).includes(slot) && !(m.availability ?? []).includes(slot)),
+    ifNeeded: members.some(
+      (m) =>
+        (m.ifNeeded ?? []).includes(slot) &&
+        !(m.availability ?? []).includes(slot),
+    ),
   }));
 }
 
@@ -30,7 +39,8 @@ export function blockConflict(student, members) {
     members.find(
       (m) =>
         m.uid !== student.uid &&
-        ((student.blockList ?? []).includes(m.uid) || (m.blockList ?? []).includes(student.uid))
+        ((student.blockList ?? []).includes(m.uid) ||
+          (m.blockList ?? []).includes(student.uid)),
     ) ?? null
   );
 }
@@ -47,7 +57,9 @@ export function getPublishWarnings(groups, studentsById) {
   const blockers = [];
 
   for (const group of groups) {
-    const members = group.memberIds.map((uid) => studentsById[uid]).filter(Boolean);
+    const members = group.memberIds
+      .map((uid) => studentsById[uid])
+      .filter(Boolean);
     if (members.length < 2) continue;
     const shared = sharedTimes(members);
     const ifNeeded = shared.filter((time) => time.ifNeeded);
@@ -56,7 +68,8 @@ export function getPublishWarnings(groups, studentsById) {
       blockers.push({
         id: `${group.id}-block-list`,
         title: `${group.name} has a block list conflict.`,
-        message: "Return to review and move one of the affected students before publishing.",
+        message:
+          "Return to review and move one of the affected students before publishing.",
       });
     }
 
@@ -66,9 +79,15 @@ export function getPublishWarnings(groups, studentsById) {
         title: `${group.name} has no fixed shared time.`,
         message: "Its members will need to agree on a meeting time.",
       });
-    } else if (ifNeeded.length > 0 && shared.length - ifNeeded.length < MIN_SHARED_TIMES) {
+    } else if (
+      ifNeeded.length > 0 &&
+      shared.length - ifNeeded.length < MIN_SHARED_TIMES
+    ) {
       const times = ifNeeded.map(({ slot }) => slotLabel(slot)).join(", ");
-      const belowRule = shared.length < MIN_SHARED_TIMES ? ` This is below the ${MIN_SHARED_TIMES}-time rule.` : "";
+      const belowRule =
+        shared.length < MIN_SHARED_TIMES
+          ? ` This is below the ${MIN_SHARED_TIMES}-time rule.`
+          : "";
       warnings.push({
         id: `${group.id}-if-needed`,
         title: `${group.name} relies on “if needed” time.`,
@@ -102,7 +121,7 @@ export const byScheduleAndInterests = (student, members, shared) => {
   const mine = new Set(student.tags ?? []);
   const sharedTags = members.reduce(
     (count, m) => count + (m.tags ?? []).filter((t) => mine.has(t)).length,
-    0
+    0,
   );
   return shared.length + sharedTags * 0.25;
 };
@@ -117,24 +136,40 @@ function hardestFirst(a, b) {
 
 export function matchGroups(
   students,
-  { groupSize = DEFAULT_GROUP_SIZE, minShared = MIN_SHARED_TIMES, strategy = bySchedule } = {}
+  {
+    groupSize = DEFAULT_GROUP_SIZE,
+    minShared = MIN_SHARED_TIMES,
+    strategy = bySchedule,
+  } = {},
 ) {
-  const responded = students.filter((s) => s.responded !== false).sort(hardestFirst);
+  const responded = students
+    .filter((s) => s.responded !== false)
+    .sort(hardestFirst);
   const unplaced = students
     .filter((s) => s.responded === false)
     .map((s) => ({ uid: s.uid, reason: "noResponse" }));
 
   const buckets = [];
   for (const student of responded) {
-    const best = bestBucket(student, buckets, { maxSize: groupSize, minShared, strategy });
+    const best = bestBucket(student, buckets, {
+      maxSize: groupSize,
+      minShared,
+      strategy,
+    });
     if (best !== null) buckets[best].push(student);
     else buckets.push([student]);
   }
 
-  const alone = buckets.filter((members) => members.length === 1).map((members) => members[0]);
+  const alone = buckets
+    .filter((members) => members.length === 1)
+    .map((members) => members[0]);
   const kept = buckets.filter((members) => members.length > 1);
   for (const student of alone) {
-    const best = bestBucket(student, kept, { maxSize: MAX_GROUP_SIZE, minShared, strategy });
+    const best = bestBucket(student, kept, {
+      maxSize: MAX_GROUP_SIZE,
+      minShared,
+      strategy,
+    });
     if (best !== null) kept[best].push(student);
     else unplaced.push({ uid: student.uid, reason: "noOverlap" });
   }
@@ -142,7 +177,9 @@ export function matchGroups(
   const groups = kept.map((members, i) => ({
     id: `g${i + 1}`,
     name: `Group ${i + 1}`,
-    memberIds: [...members].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "")).map((m) => m.uid),
+    memberIds: [...members]
+      .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+      .map((m) => m.uid),
     reviewed: false,
   }));
 
@@ -156,7 +193,11 @@ function bestBucket(student, buckets, { maxSize, minShared, strategy }) {
     if (blockConflict(student, members)) return;
     const shared = sharedTimes([...members, student]);
     if (shared.length < minShared) return;
-    const option = { index, score: strategy(student, members, shared), size: members.length };
+    const option = {
+      index,
+      score: strategy(student, members, shared),
+      size: members.length,
+    };
     if (!best || isBetter(option, best)) best = option;
   });
   return best ? best.index : null;
@@ -169,14 +210,20 @@ function isBetter(a, b) {
 }
 
 // Each option's status is "ok", "belowRule" (allowed, but under the 2-time rule) or "conflict" (block list, can't move)
-export function previewMove(student, groups, studentsById, { minShared = MIN_SHARED_TIMES } = {}) {
+export function previewMove(
+  student,
+  groups,
+  studentsById,
+  { minShared = MIN_SHARED_TIMES } = {},
+) {
   const options = groups
     .filter((g) => !g.memberIds.includes(student.uid))
     .map((g) => {
       const members = g.memberIds.map((id) => studentsById[id]).filter(Boolean);
       const conflictWith = blockConflict(student, members);
       const shared = sharedTimes([...members, student]);
-      const sharedBefore = members.length > 0 ? sharedTimes(members).length : null;
+      const sharedBefore =
+        members.length > 0 ? sharedTimes(members).length : null;
       let status = "ok";
       if (conflictWith) status = "conflict";
       else if (shared.length < minShared) status = "belowRule";
@@ -202,7 +249,8 @@ export function previewMove(student, groups, studentsById, { minShared = MIN_SHA
     best.bestFit = true;
   }
 
-  const rank = (o) => (o.bestFit ? 0 : o.status === "ok" ? 1 : o.status === "belowRule" ? 2 : 3);
+  const rank = (o) =>
+    o.bestFit ? 0 : o.status === "ok" ? 1 : o.status === "belowRule" ? 2 : 3;
   return options.sort((a, b) => rank(a) - rank(b));
 }
 
@@ -211,7 +259,9 @@ export function moveStudent(groups, uid, toGroupId) {
   return groups.map((g) => {
     let memberIds = g.memberIds.filter((id) => id !== uid);
     if (g.id === toGroupId) memberIds = [...memberIds, uid];
-    const changed = memberIds.length !== g.memberIds.length || memberIds.some((id, i) => id !== g.memberIds[i]);
+    const changed =
+      memberIds.length !== g.memberIds.length ||
+      memberIds.some((id, i) => id !== g.memberIds[i]);
     return changed ? { ...g, memberIds, reviewed: false } : g;
   });
 }
@@ -229,7 +279,7 @@ export function unplacedReason(student) {
   const slots = [...freeSlots(student)];
   if (slots.length === 0) return "Didn't mark any free times.";
   const days = [...new Set(slots.map((s) => s.split("-")[0]))].sort(
-    (a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)
+    (a, b) => DAYS.indexOf(a) - DAYS.indexOf(b),
   );
   if (days.length === 1) {
     return `Free only on ${FULL_DAY[days[0]]}s. No group shares that time.`;
@@ -249,7 +299,10 @@ const FULL_DAY = {
 
 export function reconcileRound(round, students) {
   const known = new Set(students.map((s) => s.uid));
-  const groups = round.groups.map((g) => ({ ...g, memberIds: g.memberIds.filter((id) => known.has(id)) }));
+  const groups = round.groups.map((g) => ({
+    ...g,
+    memberIds: g.memberIds.filter((id) => known.has(id)),
+  }));
   const unplaced = round.unplaced.filter((u) => known.has(u.uid));
   const seen = new Set([
     ...groups.flatMap((g) => g.memberIds),
@@ -258,7 +311,10 @@ export function reconcileRound(round, students) {
   ]);
   const missing = students
     .filter((s) => !seen.has(s.uid))
-    .map((s) => ({ uid: s.uid, reason: s.responded === false ? "noResponse" : "noOverlap" }));
+    .map((s) => ({
+      uid: s.uid,
+      reason: s.responded === false ? "noResponse" : "noOverlap",
+    }));
   return { ...round, groups, unplaced: [...unplaced, ...missing] };
 }
 
@@ -282,11 +338,16 @@ export function readAvailability(survey, response) {
   const answer = answerFor(survey, response, "availability");
   // Older answers save availability as a plain list.
   if (Array.isArray(answer)) return { available: answer, ifNeeded: [] };
-  return { available: answer?.available ?? [], ifNeeded: answer?.ifNeeded ?? [] };
+  return {
+    available: answer?.available ?? [],
+    ifNeeded: answer?.ifNeeded ?? [],
+  };
 }
 
 export function studentsFromSurvey(survey, roster, responses) {
-  const targets = survey.targetStudentUids?.length ? new Set(survey.targetStudentUids) : null;
+  const targets = survey.targetStudentUids?.length
+    ? new Set(survey.targetStudentUids)
+    : null;
   const byUid = new Map();
 
   for (const person of roster) {
@@ -310,7 +371,10 @@ export function studentsFromSurvey(survey, roster, responses) {
     const blockList = answerFor(survey, response, "blocklist");
     byUid.set(response.uid, {
       uid: response.uid,
-      name: base?.name && base.name !== "Student" ? base.name : response.name || response.email || "Student",
+      name:
+        base?.name && base.name !== "Student"
+          ? base.name
+          : response.name || response.email || "Student",
       responded: true,
       availability: available,
       ifNeeded,
