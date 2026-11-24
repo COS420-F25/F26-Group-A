@@ -1,8 +1,8 @@
-import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
 import { getStudents } from "./surveyService";
 import { HOUR_REQUEST_MESSAGE } from "./groupRounds";
 
-// Firebase is loaded on first use, so files that import this one can be tested without Firebase keys.
+
 const database = async () => (await import("../firebase")).db;
 
 export async function getSurvey(surveyId) {
@@ -69,6 +69,51 @@ export async function askForHours(surveyId, uid) {
   });
 }
 
+// Block list
+// Stored at courses/{courseId}/blockLists/{uid}/entries/{blockedUid}.
+// These never reject: a failed read gives [], a failed write is logged and resolves.
+
+const blockEntries = (db, courseId, uid) => collection(db, "courses", courseId, "blockLists", uid, "entries");
+
+const logFailure = (action) => (err) => {
+  console.error(`Block list ${action} failed:`, err?.message ?? err);
+};
+
+export async function getBlockList(courseId, uid) {
+  const db = await database();
+  return getDocs(blockEntries(db, courseId, uid)).then(
+    (snap) =>
+      snap.docs
+        .map((d) => d.data())
+        .sort((a, b) => (a.blockedName ?? "").localeCompare(b.blockedName ?? "")),
+    (err) => {
+      logFailure("read")(err);
+      return [];
+    }
+  );
+}
+
+export async function addBlock(courseId, uid, entry) {
+  if (!entry?.blockedUid || entry.blockedUid === uid) {
+    logFailure("add")({ message: "You can't add yourself to your block list." });
+    return;
+  }
+  const db = await database();
+  await setDoc(doc(blockEntries(db, courseId, uid), entry.blockedUid), {
+    blockedUid: entry.blockedUid,
+    blockedName: entry.blockedName,
+    reason: (entry.reason ?? "").trim().slice(0, 500),
+    createdAt: serverTimestamp(),
+    addedDuringRound: entry.addedDuringRound,
+    effectiveFromRound: entry.effectiveFromRound,
+  }).then(() => undefined, logFailure("add"));
+}
+
+export async function removeBlock(courseId, uid, blockedUid) {
+  const db = await database();
+  await deleteDoc(doc(blockEntries(db, courseId, uid), blockedUid)).then(() => undefined, logFailure("remove"));
+}
+
 export const firebaseGroupService = {
   getSurvey,
   getStudents,
@@ -77,4 +122,7 @@ export const firebaseGroupService = {
   saveRound,
   publishRound,
   askForHours,
+  getBlockList,
+  addBlock,
+  removeBlock,
 };
